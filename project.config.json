@@ -1,0 +1,40 @@
+{
+  "name": "I Prompt",
+  "version": "1.0.0",
+  "description": "智能提示词助手",
+  "author": "I Prompt Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/AI-Art-Station.git"
+  },
+  "development": {
+    "port": 3000,
+    "host": "localhost",
+    "autoOpen": true
+  },
+  "build": {
+    "outputDir": "build",
+    "publicPath": "/",
+    "generateSourceMap": false
+  },
+  "features": {
+    "aiGeneration": true,
+    "promptLibrary": true,
+    "imageExtractor": true,
+    "assistantTools": true,
+    "tutorials": true
+  },
+  "api": {
+    "provider": "siliconflow",
+    "model": "deepseek-ai/DeepSeek-R1",
+    "timeout": 30000,
+    "retries": 3
+  },
+  "ui": {
+    "theme": "modern",
+    "primaryColor": "#8B5CF6",
+    "animations": true,
+    "responsiveDesign": true
+  }
+} 
