@@ -1,17 +1,16 @@
 import { useState, useCallback } from 'react';
 import { validateInput, cleanPrompt } from '../utils/validation';
 import { copyToClipboard } from '../utils/clipboard';
-import { APP_CONFIG, ERROR_MESSAGES, SUCCESS_MESSAGES } from '../constants/config';
+import { APP_CONFIG, ERROR_MESSAGES } from '../constants/config';
 
 /**
- * 提示词生成器 Hook
+ * 提示词生成器 Hook - 使用 DeepSeek API
  */
 export const usePromptGenerator = () => {
   const [inputText, setInputText] = useState('');
   const [generatedPrompt, setGeneratedPrompt] = useState('');
   const [selectedStyle, setSelectedStyle] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generationSource, setGenerationSource] = useState('local'); // 'local' 或 'api'
   const [generationCount, setGenerationCount] = useState(0);
   const [apiError, setApiError] = useState(null);
   const [validationErrors, setValidationErrors] = useState([]);
@@ -26,33 +25,7 @@ export const usePromptGenerator = () => {
   }, []);
 
   /**
-   * 生成提示词 - 本地规则
-   */
-  const generateLocalPrompt = useCallback((text, style) => {
-    // 清理输入
-    const cleanedText = cleanPrompt(text);
-    
-    // 基础质量标签
-    const qualityTags = 'masterpiece, best quality, ultra detailed';
-    
-    // 风格相关标签
-    const styleMap = {
-      'realistic': 'photorealistic, hyperrealistic, detailed',
-      'anime': 'anime style, cel shading, vibrant colors',
-      'oil': 'oil painting, classical art, painterly',
-      'watercolor': 'watercolor, soft colors, flowing',
-      'sketch': 'pencil sketch, charcoal drawing, artistic'
-    };
-    
-    const styleTag = styleMap[style] || '';
-    
-    // 组合提示词
-    const parts = [qualityTags, cleanedText, styleTag].filter(part => part.trim());
-    return parts.join(', ');
-  }, []);
-
-  /**
-   * 生成提示词 - API调用
+   * 生成提示词 - 使用 DeepSeek API
    */
   const generateApiPrompt = useCallback(async (text, style) => {
     const requestBody = {
@@ -64,11 +37,12 @@ export const usePromptGenerator = () => {
 
 要求：
 1. 输出纯英文提示词，用逗号分隔
-2. 包含质量控制词如 masterpiece, best quality
+2. 包含质量控制词如 masterpiece, best quality, ultra detailed
 3. 根据风格要求添加对应的风格描述词
 4. 确保语法正确，词汇专业
 5. 长度控制在100-200个词汇之间
 6. 不要包含任何解释文字，只输出提示词
+7. 提示词要具体生动，包含丰富的细节描述
 
 风格要求：${style || '通用风格'}`
         },
@@ -105,9 +79,9 @@ export const usePromptGenerator = () => {
   }, []);
 
   /**
-   * 主生成函数
+   * 主生成函数 - 只使用 DeepSeek API
    */
-  const generatePrompt = useCallback(async (useApi = false) => {
+  const generatePrompt = useCallback(async () => {
     // 验证输入
     if (!validatePromptInput(inputText)) {
       return false;
@@ -117,36 +91,18 @@ export const usePromptGenerator = () => {
     setApiError(null);
 
     try {
-      let result;
-      
-      if (useApi && APP_CONFIG.FEATURES.AI_GENERATION) {
-        setGenerationSource('api');
-        result = await generateApiPrompt(inputText, selectedStyle);
-      } else {
-        setGenerationSource('local');
-        result = generateLocalPrompt(inputText, selectedStyle);
-      }
-
+      const result = await generateApiPrompt(inputText, selectedStyle);
       setGeneratedPrompt(result);
       setGenerationCount(prev => prev + 1);
       return true;
     } catch (error) {
-      console.error('生成提示词失败:', error);
+      console.error('DeepSeek API 生成提示词失败:', error);
       setApiError(error.message || ERROR_MESSAGES.API.UNKNOWN_ERROR);
-      
-      // API失败时回退到本地生成
-      if (useApi) {
-        setGenerationSource('local');
-        const fallbackResult = generateLocalPrompt(inputText, selectedStyle);
-        setGeneratedPrompt(fallbackResult);
-        setGenerationCount(prev => prev + 1);
-        return true;
-      }
       return false;
     } finally {
       setIsGenerating(false);
     }
-  }, [inputText, selectedStyle, validatePromptInput, generateLocalPrompt, generateApiPrompt]);
+  }, [inputText, selectedStyle, validatePromptInput, generateApiPrompt]);
 
   /**
    * 复制提示词
@@ -211,7 +167,6 @@ export const usePromptGenerator = () => {
     generatedPrompt,
     selectedStyle,
     isGenerating,
-    generationSource,
     generationCount,
     apiError,
     validationErrors,

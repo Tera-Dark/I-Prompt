@@ -1,15 +1,15 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { 
   Plus, Search, Copy, Heart, X, Languages, 
   ChevronDown, ChevronRight, Tag as TagIcon,
-  Sparkles, Bookmark, Clock, TrendingUp, Edit3,
-  Minus, Trash2, Star, Weight, Zap, ChevronLeft, ChevronRight as ChevronRightIcon,
-  EyeOff, Eye, Settings, TestTube, CheckCircle, XCircle, RefreshCw, ArrowUpDown,
-  Globe, ArrowRightLeft
+  Sparkles, TrendingUp, Edit3,
+  Trash2, 
+  EyeOff, Eye, Settings, TestTube, CheckCircle, XCircle, RefreshCw,
+  Globe, ArrowRightLeft, Download, Upload, Edit, Save, Database, 
+  Shield, AlertTriangle, FileText, Lock
 } from 'lucide-react';
 import { copyToClipboard } from '../utils/clipboard';
 import { 
-  translateText, 
   translateTag, 
   getAvailableTranslators, 
   testTranslator, 
@@ -17,13 +17,17 @@ import {
   translatePrompt,
   detectLanguage
 } from '../services/translationService';
-import { TAG_DATABASE, searchTags, getPopularTags } from '../constants/tagDatabase';
+import { 
+  TAG_DATABASE, 
+  TagDatabaseManager,
+  searchTags
+} from '../constants/tagDatabase';
 
 const PromptLibraryPage = () => {
   // 提示词编辑状态
   const [inputPrompt, setInputPrompt] = useState(''); // 用户输入的提示词（可能是中文）
   const [englishPrompt, setEnglishPrompt] = useState(''); // 最终的英文提示词
-  const [promptHistory, setPromptHistory] = useState([]);
+  // const [promptHistory, setPromptHistory] = useState([]);
   const [isTranslatingPrompt, setIsTranslatingPrompt] = useState(false);
   const [inputLanguage, setInputLanguage] = useState('auto'); // 检测到的输入语言
   
@@ -47,6 +51,15 @@ const PromptLibraryPage = () => {
   const [expandedCategories, setExpandedCategories] = useState({ favorites: true });
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+  
+  // 标签库管理状态
+  const [showTagManager, setShowTagManager] = useState(false);
+  const [showImportExport, setShowImportExport] = useState(false);
+  const [managementMode, setManagementMode] = useState('view'); // view, edit, add
+  const [editingTag, setEditingTag] = useState(null);
+  const [newTagData, setNewTagData] = useState({ en: '', cn: '', frequency: 50 });
+  const [importExportData, setImportExportData] = useState('');
+  const [tagManagerMessage, setTagManagerMessage] = useState('');
   
   // UI状态
   const [favorites, setFavorites] = useState([]);
@@ -86,18 +99,47 @@ const PromptLibraryPage = () => {
     // 避免在正在更新时同步
     if (isUpdatingPrompt) return;
     
-    // 当英文提示词发生变化时，将其分解为英文标签
+    // 当英文提示词发生变化时，将其分解为标签
     if (englishPrompt.trim()) {
-      const tagsFromPrompt = englishPrompt.split(',').map(tag => tag.trim()).filter(tag => tag);
+      // 支持中英文逗号分割
+      const tagsFromPrompt = englishPrompt.split(/[,，]/).map(tag => tag.trim()).filter(tag => tag);
       
       // 检查是否与当前选中的标签一致，避免无限循环
       const currentTagsStr = selectedTags.join(', ');
       const newTagsStr = tagsFromPrompt.join(', ');
       
       if (currentTagsStr !== newTagsStr) {
+        // 关键修复：只有当新的标签集合包含当前所有启用的标签时，才认为这是内部更新
+        const enabledTags = selectedTags.filter((_, index) => !disabledTags.has(index));
+        const enabledTagsStr = enabledTags.join(', ');
+        
+        // 如果英文提示词正好等于启用标签的组合，说明这是禁用操作导致的内部更新，不要同步
+        if (newTagsStr === enabledTagsStr) {
+          return; // 不进行同步，保持现有的selectedTags和disabledTags
+        }
+        
+        // 否则，这是用户输入或其他外部变化导致的，需要同步
         setSelectedTags(tagsFromPrompt);
-        // 重置禁用状态，因为这是新的标签集合
-        setDisabledTags(new Set());
+        
+        // 检查是否为全新的标签集合（没有任何重叠）
+        const hasOverlap = selectedTags.some(tag => tagsFromPrompt.includes(tag));
+        if (!hasOverlap && selectedTags.length > 0) {
+          // 完全不同的标签集合，重置禁用状态
+          setDisabledTags(new Set());
+        } else {
+          // 有重叠或者是从空开始，保持现有的禁用状态，但需要调整索引
+          const newDisabled = new Set();
+          disabledTags.forEach(oldIndex => {
+            if (oldIndex < selectedTags.length) {
+              const oldTag = selectedTags[oldIndex];
+              const newIndex = tagsFromPrompt.indexOf(oldTag);
+              if (newIndex !== -1) {
+                newDisabled.add(newIndex);
+              }
+            }
+          });
+          setDisabledTags(newDisabled);
+        }
       }
     } else {
       // 英文提示词为空时，清空标签
@@ -106,48 +148,31 @@ const PromptLibraryPage = () => {
         setDisabledTags(new Set());
       }
     }
-  }, [englishPrompt, isUpdatingPrompt]);
+  }, [englishPrompt, isUpdatingPrompt, selectedTags, disabledTags]);
 
   // 当禁用状态变化时，更新英文提示词显示
+  const updateEnglishPrompt = useCallback((tags) => {
+    setIsUpdatingPrompt(true);
+    
+    // 过滤掉禁用的标签
+    const enabledTags = tags.filter((_, index) => !disabledTags.has(index));
+    const newPrompt = enabledTags.join(', ');
+    
+    setEnglishPrompt(newPrompt);
+    
+    setTimeout(() => {
+      setIsUpdatingPrompt(false);
+    }, 0);
+  }, [disabledTags]);
+
   useEffect(() => {
     if (!isUpdatingPrompt && selectedTags.length > 0) {
       updateEnglishPrompt(selectedTags);
     }
-  }, [disabledTags]);
-
-  // 自动翻译监听 - 检测输入语言并翻译
-  useEffect(() => {
-    if (autoTranslate && inputPrompt.trim()) {
-      const timer = setTimeout(() => {
-        handleAutoTranslation();
-      }, 1000); // 延迟1秒自动翻译
-      
-      return () => clearTimeout(timer);
-    }
-  }, [inputPrompt, autoTranslate]);
-
-  // 处理自动翻译
-  const handleAutoTranslation = async () => {
-    if (!inputPrompt.trim()) return;
-    
-    // 检测输入语言
-    const detectedLang = detectLanguage(inputPrompt);
-    setInputLanguage(detectedLang);
-    
-    console.log(`自动翻译: 输入语言=${detectedLang}, 目标语言=${targetLanguage}`);
-    
-    // 统一翻译流程：所有输入都转换为用户选择的目标语言
-    if (detectedLang === targetLanguage) {
-      // 语言相同也要经过规范化处理
-      setEnglishPrompt(inputPrompt.trim());
-    } else {
-      // 需要翻译为目标语言
-      await translateToTargetLanguage();
-    }
-  };
+  }, [disabledTags, isUpdatingPrompt, selectedTags, updateEnglishPrompt]);
 
   // 翻译为目标语言
-  const translateToTargetLanguage = async () => {
+  const translateToTargetLanguage = useCallback(async () => {
     if (!inputPrompt.trim()) {
       setCopyStatus('empty-prompt');
       setTimeout(() => setCopyStatus(''), 2000);
@@ -158,63 +183,98 @@ const PromptLibraryPage = () => {
     setCopyStatus('translating-to-target');
 
     try {
+      console.log(`开始翻译提示词: "${inputPrompt}" 到 ${targetLanguage}`);
+      
       const result = await translatePrompt(inputPrompt, {
-        preferredEngines: [selectedTranslator, 'baidu_web', 'alibaba_web', 'mymemory', 'google_web'],
+        preferredEngines: ['mymemory', 'google_web', 'libre', selectedTranslator], // 免费引擎优先
         targetLang: targetLanguage,
         sourceLang: inputLanguage === 'auto' ? 'zh' : inputLanguage
       });
 
-      setEnglishPrompt(result.translatedText);
+      console.log('翻译结果:', result);
       
-      setCopyStatus('translate-to-target-success');
-      setTimeout(() => setCopyStatus(''), 3000);
-      
-      // 获取目标语言的显示名称
-      const getLanguageName = (code) => {
-        const languageNames = {
-          'en': '英文',
-          'zh': '中文', 
-          'ja': '日文',
-          'ko': '韩文',
-          'fr': '法文',
-          'de': '德文',
-          'es': '西班牙文',
-          'ru': '俄文'
+      if (result && result.translatedText) {
+        setEnglishPrompt(result.translatedText);
+        setCopyStatus('translate-to-target-success');
+        
+        // 获取目标语言的显示名称
+        const getLanguageName = (code) => {
+          const languageNames = {
+            'en': '英文',
+            'zh': '中文', 
+            'ja': '日文',
+            'ko': '韩文',
+            'fr': '法文',
+            'de': '德文',
+            'es': '西班牙文',
+            'ru': '俄文'
+          };
+          return languageNames[code] || code;
         };
-        return languageNames[code] || code;
-      };
-      
-      console.log(`翻译完成: ${result.successCount}/${result.totalCount} 个标签成功翻译为${getLanguageName(targetLanguage)}`);
-      if (result.errors.length > 0) {
-        console.warn('翻译错误:', result.errors);
+        
+        console.log(`翻译完成: ${result.successCount}/${result.totalCount} 个标签成功翻译为${getLanguageName(targetLanguage)}`);
+        if (result.errors && result.errors.length > 0) {
+          console.warn('翻译错误:', result.errors);
+        }
+      } else {
+        throw new Error('翻译结果为空');
       }
       
     } catch (error) {
       console.error('提示词翻译失败:', error);
       setCopyStatus('translate-error');
-      setTimeout(() => setCopyStatus(''), 3000);
+      
+      // 如果在线翻译失败，尝试使用本地词典
+      try {
+        const { translateText } = await import('../services/translationService');
+        const fallbackResult = await translateText(inputPrompt, {
+          targetLang: targetLanguage,
+          sourceLang: 'zh',
+          preferredEngines: ['dictionary'] // 强制使用词典
+        });
+        
+        if (fallbackResult && fallbackResult.translatedText) {
+          setEnglishPrompt(fallbackResult.translatedText);
+          setCopyStatus('translate-fallback-success');
+          console.log('词典翻译成功:', fallbackResult.translatedText);
+        }
+      } catch (fallbackError) {
+        console.error('词典翻译也失败:', fallbackError);
+      }
     } finally {
       setIsTranslatingPrompt(false);
+      setTimeout(() => setCopyStatus(''), 3000);
     }
-  };
+  }, [inputPrompt, targetLanguage, inputLanguage, selectedTranslator]);
 
-  // 更新英文提示词（排除禁用的标签）
-  const updateEnglishPrompt = (tags) => {
-    if (isUpdatingPrompt) return; // 避免循环更新
+  // 自动翻译监听 - 检测输入语言并翻译
+  const handleAutoTranslation = useCallback(async () => {
+    if (!inputPrompt.trim()) return;
     
-    setIsUpdatingPrompt(true);
-    const enabledTags = tags.filter((_, index) => !disabledTags.has(index));
-    const newPrompt = enabledTags.join(', ');
-    setEnglishPrompt(newPrompt);
-    
-    // 添加到历史记录
-    if (newPrompt.trim() && !promptHistory.includes(newPrompt.trim())) {
-      setPromptHistory(prev => [newPrompt.trim(), ...prev.slice(0, 9)]);
+    setIsTranslatingPrompt(true);
+
+    // 检测输入语言
+    const detectedLang = detectLanguage(inputPrompt);
+    setInputLanguage(detectedLang);
+
+    if (detectedLang === targetLanguage) {
+      // 语言相同也要经过规范化处理
+      setEnglishPrompt(inputPrompt.trim());
+    } else {
+      // 需要翻译为目标语言
+      await translateToTargetLanguage();
     }
-    
-    // 重置更新标志
-    setTimeout(() => setIsUpdatingPrompt(false), 0);
-  };
+  }, [inputPrompt, targetLanguage, translateToTargetLanguage]);
+
+  useEffect(() => {
+    if (autoTranslate && inputPrompt.trim()) {
+      const timer = setTimeout(() => {
+        handleAutoTranslation();
+      }, 1000); // 延迟1秒自动翻译
+      
+      return () => clearTimeout(timer);
+    }
+  }, [inputPrompt, autoTranslate, handleAutoTranslation]);
 
   // 处理输入提示词变化
   const handleInputPromptChange = (value) => {
@@ -229,7 +289,7 @@ const PromptLibraryPage = () => {
     }
   };
 
-  // 添加标签到提示词
+  // 添加标签到提示词（移除跳转功能）
   const addTagToPrompt = async (tag) => {
     // 确保标签是英文格式
     let englishTag = tag.en;
@@ -257,11 +317,9 @@ const PromptLibraryPage = () => {
     const newPrompt = currentPrompt ? `${currentPrompt}, ${englishTag}` : englishTag;
     setEnglishPrompt(newPrompt);
     
-    // 聚焦到文本框末尾
-    if (textareaRef.current) {
-      textareaRef.current.focus();
-      textareaRef.current.setSelectionRange(inputPrompt.length, inputPrompt.length);
-    }
+    // 显示添加成功提示
+    setCopyStatus('tag-added');
+    setTimeout(() => setCopyStatus(''), 1500);
   };
 
   // 删除标签
@@ -432,11 +490,11 @@ const PromptLibraryPage = () => {
     setTimeout(() => setCopyStatus(''), 2000);
   };
 
-  // 一键翻译所有未翻译的标签为中文（用于显示）
+  // 翻译所有标签为目标语言
   const translateAllTags = async () => {
     const untranslatedTags = selectedTags.filter(tag => {
       const parsed = parseTag(tag);
-      return !translatedTags[parsed.text] || detectLanguage(parsed.text) !== 'zh';
+      return !translatedTags[parsed.text] || detectLanguage(parsed.text) !== targetLanguage;
     });
 
     if (untranslatedTags.length === 0) {
@@ -445,13 +503,13 @@ const PromptLibraryPage = () => {
       return;
     }
 
-    setCopyStatus('translating-tags-to-chinese');
+    setCopyStatus('translating-tags-to-target');
     
     try {
       const texts = untranslatedTags.map(tag => parseTag(tag).text);
       const results = await batchTranslate(texts, {
-        preferredEngines: [selectedTranslator, 'baidu_web', 'alibaba_web', 'mymemory', 'google_web'],
-        targetLang: 'zh', // 翻译为中文用于显示
+        preferredEngines: [selectedTranslator, 'mymemory', 'google_web', 'libre'],
+        targetLang: targetLanguage, // 使用用户选择的目标语言
         sourceLang: 'auto'
       });
 
@@ -465,7 +523,7 @@ const PromptLibraryPage = () => {
       });
 
       setTranslatedTags(prev => ({ ...prev, ...newTranslations }));
-      setCopyStatus('tags-translated-to-chinese');
+      setCopyStatus('tags-translated-to-target');
     } catch (error) {
       console.error('批量翻译失败:', error);
       setCopyStatus('translate-error');
@@ -474,38 +532,355 @@ const PromptLibraryPage = () => {
     setTimeout(() => setCopyStatus(''), 2000);
   };
 
-  // 翻译单个标签为中文（用于显示）
+  // 翻译单个标签为目标语言（用于显示）
   const translateSingleTag = async (tag) => {
     // 提取纯文本进行翻译
     const parsed = parseTag(tag);
     const pureText = parsed.text;
     
-    // 如果已经有翻译，直接返回
+    // 如果已经有中文翻译，直接返回
     if (translatedTags[pureText]) {
-      return translatedTags[pureText];
+      const cached = translatedTags[pureText];
+      const translatedText = typeof cached === 'object' && cached.translatedText ? cached.translatedText : cached;
+      return translatedText;
     }
     
-    // 如果已经是中文，直接返回
-    if (detectLanguage(pureText) === 'zh') {
+    // 检查是否已经是中文（简单检测：包含中文字符）
+    const isAlreadyChinese = /[\u4e00-\u9fff]/.test(pureText);
+    if (isAlreadyChinese) {
       setTranslatedTags(prev => ({ ...prev, [pureText]: pureText }));
       return pureText;
     }
     
     try {
+      console.log(`翻译标签为中文: "${pureText}"`);
+      
       const result = await translateTag(pureText, {
-        preferredEngines: [selectedTranslator, 'baidu_web', 'alibaba_web', 'mymemory', 'google_web'],
-        targetLang: 'zh', // 翻译为中文用于显示
+        preferredEngines: ['mymemory', 'google_web', 'libre'], // 使用免费引擎
+        targetLang: 'zh', // 固定翻译为中文
         sourceLang: 'auto'
       });
       
+      console.log(`标签翻译结果:`, result);
+      
       // 确保只返回字符串，不是对象
       const translatedText = result.translatedText || result;
-      setTranslatedTags(prev => ({ ...prev, [pureText]: translatedText }));
-      return translatedText;
+      
+      // 检查翻译质量
+      if (translatedText && translatedText.trim() !== pureText.trim()) {
+        setTranslatedTags(prev => ({ ...prev, [pureText]: translatedText }));
+        return translatedText;
+      } else {
+        // 翻译质量不佳，尝试使用内置词典
+        const fallbackTranslation = getFallbackChineseTranslation(pureText);
+        setTranslatedTags(prev => ({ ...prev, [pureText]: fallbackTranslation }));
+        return fallbackTranslation;
+      }
+      
     } catch (error) {
-      console.error('翻译失败:', error);
-      return pureText;
+      console.error('标签翻译失败:', error);
+      
+      // 翻译失败时使用内置词典
+      const fallbackTranslation = getFallbackChineseTranslation(pureText);
+      setTranslatedTags(prev => ({ ...prev, [pureText]: fallbackTranslation }));
+      return fallbackTranslation;
     }
+  };
+
+  // 内置中文词典翻译（降级方案）
+  const getFallbackChineseTranslation = (englishText) => {
+    const chineseDict = {
+      // 人物相关
+      'beautiful': '美丽',
+      'cute': '可爱',
+      'pretty': '漂亮',
+      'handsome': '英俊',
+      'gorgeous': '华丽',
+      'stunning': '令人惊叹',
+      'amazing': '惊人',
+      'perfect': '完美',
+      'flawless': '无瑕',
+      'elegant': '优雅',
+      'graceful': '优美',
+      'charming': '迷人',
+      'attractive': '有吸引力',
+      'lovely': '可爱',
+      'sweet': '甜美',
+      
+      // 人物类型
+      'girl': '女孩',
+      'boy': '男孩',
+      'woman': '女性',
+      'man': '男性',
+      'lady': '女士',
+      'gentleman': '绅士',
+      'person': '人物',
+      'character': '角色',
+      'figure': '人物',
+      'maiden': '少女',
+      'youth': '青年',
+      'child': '儿童',
+      'baby': '婴儿',
+      'adult': '成人',
+      'teenager': '青少年',
+      'young': '年轻',
+      'old': '年老',
+      
+      // 动物相关
+      'cat': '猫',
+      'dog': '狗',
+      'wolf': '狼',
+      'fox': '狐狸',
+      'rabbit': '兔子',
+      'bird': '鸟',
+      'dragon': '龙',
+      'tiger': '老虎',
+      'lion': '狮子',
+      'bear': '熊',
+      'horse': '马',
+      'deer': '鹿',
+      'mouse': '老鼠',
+      'fish': '鱼',
+      'butterfly': '蝴蝶',
+      'white': '白色',
+      'black': '黑色',
+      'red': '红色',
+      'blue': '蓝色',
+      'green': '绿色',
+      'yellow': '黄色',
+      'purple': '紫色',
+      'pink': '粉色',
+      'orange': '橙色',
+      'brown': '棕色',
+      'gray': '灰色',
+      'silver': '银色',
+      'gold': '金色',
+      
+      // 外观特征
+      'hair': '头发',
+      'eyes': '眼睛',
+      'face': '脸',
+      'skin': '皮肤',
+      'smile': '微笑',
+      'dress': '连衣裙',
+      'clothes': '衣服',
+      'outfit': '服装',
+      'uniform': '制服',
+      'kimono': '和服',
+      'hat': '帽子',
+      'glasses': '眼镜',
+      'jewelry': '珠宝',
+      'long': '长',
+      'short': '短',
+      'curly': '卷曲',
+      'straight': '直',
+      'wavy': '波浪',
+      'thick': '厚',
+      'thin': '薄',
+      'big': '大',
+      'small': '小',
+      'large': '大型',
+      'tiny': '微小',
+      
+      // 表情情感
+      'happy': '开心',
+      'sad': '悲伤',
+      'angry': '愤怒',
+      'surprised': '惊讶',
+      'excited': '兴奋',
+      'calm': '平静',
+      'peaceful': '宁静',
+      'joyful': '快乐',
+      'cheerful': '愉快',
+      'smiling': '微笑',
+      'laughing': '大笑',
+      'crying': '哭泣',
+      'serious': '严肃',
+      'gentle': '温柔',
+      'kind': '善良',
+      'friendly': '友好',
+      'shy': '害羞',
+      'confident': '自信',
+      'proud': '骄傲',
+      'humble': '谦逊',
+      
+      // 风格类型
+      'anime': '动漫',
+      'manga': '漫画',
+      'realistic': '写实',
+      'cartoon': '卡通',
+      'fantasy': '奇幻',
+      'sci-fi': '科幻',
+      'cyberpunk': '赛博朋克',
+      'steampunk': '蒸汽朋克',
+      'medieval': '中世纪',
+      'modern': '现代',
+      'vintage': '复古',
+      'retro': '怀旧',
+      'classic': '经典',
+      'traditional': '传统',
+      'contemporary': '当代',
+      'futuristic': '未来派',
+      'gothic': '哥特',
+      'baroque': '巴洛克',
+      'minimalist': '极简',
+      'abstract': '抽象',
+      'surreal': '超现实',
+      
+      // 艺术质量
+      'masterpiece': '杰作',
+      'artwork': '艺术品',
+      'illustration': '插画',
+      'painting': '绘画',
+      'drawing': '素描',
+      'sketch': '草图',
+      'digital art': '数字艺术',
+      'oil painting': '油画',
+      'watercolor': '水彩',
+      'pencil': '铅笔',
+      'ink': '墨水',
+      'acrylic': '丙烯',
+      'best quality': '最佳质量',
+      'high quality': '高质量',
+      'ultra detailed': '超详细',
+      'extremely detailed': '极其详细',
+      'highly detailed': '高度详细',
+      'detailed': '详细',
+      'sharp': '锐利',
+      'clear': '清晰',
+      'vivid': '鲜艳',
+      'bright': '明亮',
+      'colorful': '多彩',
+      'vibrant': '充满活力',
+      
+      // 环境场景
+      'background': '背景',
+      'scenery': '风景',
+      'landscape': '风景',
+      'nature': '自然',
+      'forest': '森林',
+      'mountain': '山',
+      'sea': '海',
+      'ocean': '海洋',
+      'beach': '海滩',
+      'sky': '天空',
+      'cloud': '云',
+      'sun': '太阳',
+      'moon': '月亮',
+      'star': '星星',
+      'night': '夜晚',
+      'day': '白天',
+      'sunset': '日落',
+      'sunrise': '日出',
+      'rain': '雨',
+      'snow': '雪',
+      'wind': '风',
+      'flower': '花',
+      'tree': '树',
+      'grass': '草',
+      'leaf': '叶子',
+      'garden': '花园',
+      'park': '公园',
+      'city': '城市',
+      'building': '建筑',
+      'house': '房子',
+      'room': '房间',
+      'window': '窗户',
+      'door': '门',
+      'bridge': '桥',
+      'road': '道路',
+      'street': '街道',
+      
+      // 动作姿势
+      'standing': '站立',
+      'sitting': '坐着',
+      'lying': '躺着',
+      'walking': '行走',
+      'running': '奔跑',
+      'jumping': '跳跃',
+      'dancing': '舞蹈',
+      'singing': '唱歌',
+      'reading': '阅读',
+      'writing': '写作',
+      'sleeping': '睡觉',
+      'eating': '吃饭',
+      'drinking': '喝水',
+      'playing': '玩耍',
+      'working': '工作',
+      'studying': '学习',
+      'looking': '看',
+      'watching': '观看',
+      'listening': '听',
+      'thinking': '思考',
+      'dreaming': '做梦',
+      
+      // 视角构图
+      'close-up': '特写',
+      'full body': '全身',
+      'upper body': '上半身',
+      'portrait': '肖像',
+      'profile': '侧面',
+      'front view': '正面',
+      'side view': '侧面',
+      'back view': '背面',
+      'from above': '俯视',
+      'from below': '仰视',
+      'wide shot': '远景',
+      'medium shot': '中景',
+      'extreme close-up': '大特写',
+      
+      // 复合词处理
+      'beautiful girl': '美丽女孩',
+      'cute girl': '可爱女孩',
+      'pretty woman': '漂亮女性',
+      'handsome man': '英俊男性',
+      'white cat': '白猫',
+      'black cat': '黑猫',
+      'red hair': '红色头发',
+      'blue eyes': '蓝色眼睛',
+      'long hair': '长发',
+      'short hair': '短发',
+      'school uniform': '校服',
+      'wedding dress': '婚纱',
+      'casual clothes': '便装',
+      'formal wear': '正装',
+      'dragon lady': '龙娘',
+      'white wolf': '白狼',
+      'red wolf': '红狼',
+      'best friend': '最好的朋友',
+      'love story': '爱情故事',
+      'fairy tale': '童话',
+      'magic spell': '魔法咒语',
+      'crystal clear': '水晶般清澈',
+      'snow white': '雪白',
+      'cherry blossom': '樱花',
+      'full moon': '满月',
+      'shooting star': '流星',
+      'rainbow': '彩虹',
+      'golden hour': '黄金时刻',
+      'blue hour': '蓝调时刻'
+    };
+    
+    // 先尝试完整匹配
+    const exactMatch = chineseDict[englishText.toLowerCase()];
+    if (exactMatch) {
+      return exactMatch;
+    }
+    
+    // 如果没有完整匹配，尝试分词匹配
+    const words = englishText.toLowerCase().split(/\s+/);
+    const translatedWords = words.map(word => {
+      return chineseDict[word] || word;
+    });
+    
+    // 如果有翻译成功的词，返回翻译结果
+    const hasTranslation = translatedWords.some((word, index) => word !== words[index]);
+    if (hasTranslation) {
+      return translatedWords.join(' ');
+    }
+    
+    // 都没有匹配到，返回原文
+    return englishText;
   };
 
   // 复制标签
@@ -515,18 +890,41 @@ const PromptLibraryPage = () => {
     setTimeout(() => setCopyStatus(''), 2000);
   };
 
-  // 收藏标签
-  const favoriteTag = (tag) => {
+  // 收藏标签（从TagPill调用，包含翻译信息）
+  const favoriteTag = async (tag, chineseTranslation = null) => {
     const parsed = parseTag(tag);
-    let translatedText = translatedTags[parsed.text] || parsed.text;
     
-    // 确保翻译文本是字符串
-    if (typeof translatedText === 'object' && translatedText.translatedText) {
-      translatedText = translatedText.translatedText;
+    let finalTranslation = chineseTranslation;
+    
+    // 如果没有提供翻译，尝试获取现有翻译
+    if (!finalTranslation) {
+      if (translatedTags[parsed.text]) {
+        const cached = translatedTags[parsed.text];
+        finalTranslation = typeof cached === 'object' && cached.translatedText ? cached.translatedText : cached;
+      } else {
+        // 尝试获取翻译
+        try {
+          const result = await translateSingleTag(tag);
+          finalTranslation = typeof result === 'object' && result.translatedText ? result.translatedText : result;
+        } catch (error) {
+          console.error('收藏时翻译失败:', error);
+          finalTranslation = parsed.text; // 使用原文作为降级方案
+        }
+      }
     }
     
-    const tagObj = { en: parsed.text, cn: translatedText, frequency: 80 };
+    // 创建标签对象 - 英文作为主要标签，翻译作为显示
+    const tagObj = { 
+      en: parsed.text, 
+      cn: finalTranslation || parsed.text,
+      frequency: 80 
+    };
+    
     toggleFavorite(tagObj);
+    
+    // 显示收藏成功提示
+    setCopyStatus('tag-favorited');
+    setTimeout(() => setCopyStatus(''), 2000);
   };
 
   // 复制功能
@@ -571,9 +969,33 @@ const PromptLibraryPage = () => {
     if (selectedCategory === 'favorites') {
       if (selectedSubcategory === 'personal') {
         return favorites;
+      } else if (selectedSubcategory === 'popular') {
+        // 显示热门标签子分类
+        return TAG_DATABASE.favorites.subcategories.popular.tags || [];
       } else {
-        // 显示热门标签
-        return getPopularTags(20);
+        // 没有选择子分类时，显示所有收藏下的标签
+        const allFavoriteTags = [];
+        if (TAG_DATABASE.favorites && TAG_DATABASE.favorites.subcategories) {
+          Object.values(TAG_DATABASE.favorites.subcategories).forEach(subcategory => {
+            if (subcategory.tags) {
+              allFavoriteTags.push(...subcategory.tags);
+            }
+          });
+        }
+        // 添加个人收藏的标签
+        allFavoriteTags.push(...favorites);
+        
+        // 去重，基于英文标签名
+        const uniqueTags = [];
+        const seen = new Set();
+        allFavoriteTags.forEach(tag => {
+          if (!seen.has(tag.en)) {
+            seen.add(tag.en);
+            uniqueTags.push(tag);
+          }
+        });
+        
+        return uniqueTags;
       }
     }
     
@@ -626,14 +1048,171 @@ const PromptLibraryPage = () => {
       'translating-prompt': '翻译中...',
       'translating-to-target': `翻译为${getLanguageName(targetLanguage)}中...`,
       'translate-to-target-success': `翻译为${getLanguageName(targetLanguage)}成功`,
+      'translate-fallback-success': `词典翻译为${getLanguageName(targetLanguage)}成功`,
       'translate-error': '翻译失败',
       'translating-tag': '翻译标签中...',
       'tag-translated': '标签翻译成功',
       'tag-translate-failed': '标签翻译失败',
+      'tag-added': '标签已添加到提示词',
+      'tag-favorited': '标签已添加到个人收藏',
+      'translating-tags-to-target': `批量翻译为${getLanguageName(targetLanguage)}中...`,
+      'tags-translated-to-target': `标签已翻译为${getLanguageName(targetLanguage)}`,
+      'no-untranslated': `所有标签已是${getLanguageName(targetLanguage)}`,
       'all-tags-translated': '所有标签翻译完成',
-      'testing-translator': '测试翻译引擎中...'
+      'testing-translator': '测试翻译引擎中...',
+      'test-success': '引擎测试成功',
+      'test-failed': '引擎测试失败',
+      'error': '操作失败'
     };
     return messages[copyStatus] || '';
+  };
+
+  // 标签库管理功能
+  const handleAddTag = async () => {
+    try {
+      if (!newTagData.en || !newTagData.cn) {
+        setTagManagerMessage('请输入英文和中文标签');
+        return;
+      }
+      
+      const addedTag = TagDatabaseManager.addTag(
+        selectedCategory, 
+        selectedSubcategory, 
+        newTagData
+      );
+      
+      setNewTagData({ en: '', cn: '', frequency: 50 });
+      setManagementMode('view');
+      setTagManagerMessage(`标签 "${addedTag.en}" 添加成功`);
+      
+      // 强制刷新组件
+      setSelectedCategory(selectedCategory);
+    } catch (error) {
+      setTagManagerMessage(`添加失败: ${error.message}`);
+    }
+    
+    setTimeout(() => setTagManagerMessage(''), 3000);
+  };
+
+  const handleEditTag = (tag) => {
+    setEditingTag(tag);
+    setNewTagData({
+      en: tag.en,
+      cn: tag.cn,
+      frequency: tag.frequency || 50
+    });
+    setManagementMode('edit');
+  };
+
+  const handleSaveTag = async () => {
+    try {
+      if (!editingTag || !newTagData.en || !newTagData.cn) {
+        setTagManagerMessage('请输入完整的标签信息');
+        return;
+      }
+      
+      const updatedTag = TagDatabaseManager.updateTag(
+        selectedCategory,
+        selectedSubcategory,
+        editingTag.id,
+        newTagData
+      );
+      
+      if (updatedTag) {
+        setEditingTag(null);
+        setNewTagData({ en: '', cn: '', frequency: 50 });
+        setManagementMode('view');
+        setTagManagerMessage(`标签 "${updatedTag.en}" 更新成功`);
+        
+        // 强制刷新组件
+        setSelectedCategory(selectedCategory);
+      } else {
+        setTagManagerMessage('更新失败：标签不存在或为默认标签');
+      }
+    } catch (error) {
+      setTagManagerMessage(`更新失败: ${error.message}`);
+    }
+    
+    setTimeout(() => setTagManagerMessage(''), 3000);
+  };
+
+  const handleDeleteTag = async (tag) => {
+    if (!window.confirm(`确定要删除标签 "${tag.en}" 吗？`)) {
+      return;
+    }
+    
+    try {
+      const success = TagDatabaseManager.removeTag(
+        selectedCategory,
+        selectedSubcategory,
+        tag.id
+      );
+      
+      if (success) {
+        setTagManagerMessage(`标签 "${tag.en}" 删除成功`);
+        
+        // 强制刷新组件
+        setSelectedCategory(selectedCategory);
+      } else {
+        setTagManagerMessage('删除失败：标签不存在或为默认标签');
+      }
+    } catch (error) {
+      setTagManagerMessage(`删除失败: ${error.message}`);
+    }
+    
+    setTimeout(() => setTagManagerMessage(''), 3000);
+  };
+
+  const handleExportDatabase = () => {
+    try {
+      const exportData = TagDatabaseManager.exportUserDatabase();
+      const jsonString = JSON.stringify(exportData, null, 2);
+      setImportExportData(jsonString);
+      setShowImportExport(true);
+      setTagManagerMessage('用户标签库导出成功');
+    } catch (error) {
+      setTagManagerMessage(`导出失败: ${error.message}`);
+    }
+    
+    setTimeout(() => setTagManagerMessage(''), 3000);
+  };
+
+  const handleImportDatabase = () => {
+    try {
+      if (!importExportData || typeof importExportData !== 'string' || !importExportData.trim()) {
+        setTagManagerMessage('请输入有效的JSON数据');
+        return;
+      }
+      
+      const parsedData = JSON.parse(importExportData);
+      TagDatabaseManager.importUserDatabase(parsedData);
+      setImportExportData('');
+      setShowImportExport(false);
+      setTagManagerMessage('标签库导入成功');
+      
+      // 强制刷新组件
+      setSelectedCategory('favorites');
+    } catch (error) {
+      setTagManagerMessage(`导入失败: ${error.message}`);
+    }
+    
+    setTimeout(() => setTagManagerMessage(''), 3000);
+  };
+
+  const downloadExportFile = () => {
+    const dataToDownload = typeof importExportData === 'string' ? importExportData : JSON.stringify(importExportData, null, 2);
+    const blob = new Blob([dataToDownload], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `i-prompt-tags-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    setTagManagerMessage('标签库文件下载成功');
+    setTimeout(() => setTagManagerMessage(''), 3000);
   };
 
   return (
@@ -726,7 +1305,7 @@ const PromptLibraryPage = () => {
               </div>
 
               {/* 快速历史记录 */}
-              {promptHistory.length > 0 && (
+              {/* {promptHistory.length > 0 && (
                 <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     <Clock size={16} className="text-gray-600" />
@@ -744,7 +1323,7 @@ const PromptLibraryPage = () => {
                     ))}
                   </div>
                 </div>
-              )}
+              )} */}
             </div>
           </div>
 
@@ -961,11 +1540,12 @@ const PromptLibraryPage = () => {
             </div>
             
             <div 
-              className="border border-gray-300 rounded-lg p-6 bg-blue-50/20 overflow-y-auto"
+              className="border border-gray-300 rounded-lg p-6 bg-blue-50/20 relative"
               style={{
                 minHeight: '200px',
                 maxHeight: '1200px',
-                height: 'auto'
+                height: 'auto',
+                overflow: 'visible'
               }}
             >
               {selectedTags.length === 0 ? (
@@ -989,11 +1569,12 @@ const PromptLibraryPage = () => {
                       onAdjustWeight={(delta) => adjustWeight(index, delta)}
                       onAdjustBrackets={(bracketType, delta) => adjustBrackets(index, bracketType, delta)}
                       onCopy={() => copyTag(tag)}
-                      onFavorite={() => favoriteTag(tag)}
+                      onFavorite={(chineseTranslation) => favoriteTag(tag, chineseTranslation)}
                       onTranslate={translateSingleTag}
                       translatedTags={translatedTags}
                       hoveredTag={hoveredTag}
                       setHoveredTag={setHoveredTag}
+                      targetLanguage={targetLanguage}
                     />
                   ))}
                 </div>
@@ -1077,12 +1658,68 @@ const PromptLibraryPage = () => {
                        `${TAG_DATABASE[selectedCategory]?.name} - ${TAG_DATABASE[selectedCategory]?.subcategories[selectedSubcategory]?.name}` :
                        TAG_DATABASE[selectedCategory]?.name || '标签库'}
                     </h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {searchQuery ? `找到 ${currentTags.length} 个相关标签` : 
-                       `共 ${currentTags.length} 个标签`}
-                    </p>
+                    <div className="flex items-center gap-4 mt-1">
+                      <p className="text-sm text-gray-600">
+                        {searchQuery ? `找到 ${currentTags.length} 个相关标签` : 
+                         `共 ${currentTags.length} 个标签`}
+                      </p>
+                      {selectedCategory && selectedSubcategory && TAG_DATABASE[selectedCategory]?.subcategories[selectedSubcategory]?.isDefault === false && (
+                        <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full flex items-center gap-1">
+                          <Edit size={10} />
+                          可编辑
+                        </span>
+                      )}
+                      {selectedCategory && selectedSubcategory && TAG_DATABASE[selectedCategory]?.subcategories[selectedSubcategory]?.isDefault === true && (
+                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full flex items-center gap-1">
+                          <Lock size={10} />
+                          默认库
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    {/* 管理按钮 */}
+                    {selectedCategory && selectedSubcategory && (
+                      <>
+                        {TAG_DATABASE[selectedCategory]?.subcategories[selectedSubcategory]?.isDefault === false && (
+                          <button
+                            onClick={() => {
+                              setManagementMode('add');
+                              setNewTagData({ en: '', cn: '', frequency: 50 });
+                              setShowTagManager(true);
+                            }}
+                            className="flex items-center gap-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                          >
+                            <Plus size={14} />
+                            添加标签
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setShowTagManager(!showTagManager)}
+                          className="flex items-center gap-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                        >
+                          <Database size={14} />
+                          管理
+                        </button>
+                      </>
+                    )}
+                    
+                    {/* 导入导出按钮 */}
+                    <button
+                      onClick={handleExportDatabase}
+                      className="flex items-center gap-1 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
+                    >
+                      <Download size={14} />
+                      导出
+                    </button>
+                    <button
+                      onClick={() => setShowImportExport(true)}
+                      className="flex items-center gap-1 px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm"
+                    >
+                      <Upload size={14} />
+                      导入
+                    </button>
+                    
                     <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">
                       点击标签添加到提示词
                     </span>
@@ -1097,16 +1734,33 @@ const PromptLibraryPage = () => {
                     <p className="text-gray-500 mb-4">
                       {searchQuery ? '未找到匹配的标签' : '该分类暂无标签'}
                     </p>
+                    {selectedCategory && selectedSubcategory && TAG_DATABASE[selectedCategory]?.subcategories[selectedSubcategory]?.isDefault === false && (
+                      <button
+                        onClick={() => {
+                          setManagementMode('add');
+                          setNewTagData({ en: '', cn: '', frequency: 50 });
+                          setShowTagManager(true);
+                        }}
+                        className="flex items-center gap-2 mx-auto px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        <Plus size={16} />
+                        添加第一个标签
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
                     {currentTags.map((tag, index) => (
                       <TagCard
-                        key={`${tag.en}-${index}`}
+                        key={`${tag.id || tag.en}-${index}`}
                         tag={tag}
                         onAdd={() => addTagToPrompt(tag)}
-                        onToggleFavorite={() => toggleFavorite(tag)}
+                        onToggleFavorite={() => favoriteTag(tag)}
                         isFavorited={favorites.some(fav => fav.en === tag.en)}
+                        onEdit={showTagManager ? () => handleEditTag(tag) : null}
+                        onDelete={showTagManager ? () => handleDeleteTag(tag) : null}
+                        isEditable={TAG_DATABASE[selectedCategory]?.subcategories[selectedSubcategory]?.isDefault === false}
+                        showManagement={showTagManager}
                       />
                     ))}
                   </div>
@@ -1121,20 +1775,271 @@ const PromptLibraryPage = () => {
       {copyStatus && (
         <div className={`fixed bottom-4 right-4 px-4 py-2 rounded-lg text-white text-sm transition-all duration-300 shadow-lg z-50 ${
           copyStatus === 'copied' ? 'bg-green-600' : 
+          copyStatus === 'tag-added' ? 'bg-blue-600' :
+          copyStatus === 'tag-favorited' ? 'bg-pink-600' :
           copyStatus === 'translating-to-target' ? 'bg-blue-600' :
           copyStatus === 'translate-to-target-success' ? 'bg-green-600' :
           copyStatus === 'translating-tag' ? 'bg-orange-600' :
           copyStatus === 'tag-translated' ? 'bg-green-600' :
-          copyStatus === 'translating-tags-to-chinese' ? 'bg-purple-600' :
-          copyStatus === 'tags-translated-to-chinese' ? 'bg-green-600' :
+          copyStatus === 'translating-tags-to-target' ? 'bg-purple-600' :
+          copyStatus === 'tags-translated-to-target' ? 'bg-green-600' :
+          copyStatus === 'no-untranslated' ? 'bg-yellow-600' :
           copyStatus === 'translate-error' ? 'bg-red-600' :
           copyStatus === 'empty-prompt' ? 'bg-orange-600' :
-          copyStatus === 'no-untranslated' ? 'bg-yellow-600' :
           copyStatus === 'test-success' ? 'bg-green-600' :
           copyStatus === 'test-failed' ? 'bg-red-600' :
           'bg-red-600'
         }`}>
           {getCopyStatusMessage()}
+        </div>
+      )}
+
+      {/* 标签管理面板 */}
+      {showTagManager && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <Database className="text-blue-600 mr-2" size={20} />
+                  标签库管理
+                  {selectedCategory && selectedSubcategory && (
+                    <span className="text-sm text-gray-500 ml-2">
+                      {TAG_DATABASE[selectedCategory]?.name} - {TAG_DATABASE[selectedCategory]?.subcategories[selectedSubcategory]?.name}
+                    </span>
+                  )}
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowTagManager(false);
+                    setManagementMode('view');
+                    setEditingTag(null);
+                    setNewTagData({ en: '', cn: '', frequency: 50 });
+                  }}
+                  className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              
+              {tagManagerMessage && (
+                <div className={`mt-4 p-3 rounded-lg text-sm ${
+                  tagManagerMessage.includes('成功') ? 'bg-green-50 text-green-700 border border-green-200' :
+                  tagManagerMessage.includes('失败') || tagManagerMessage.includes('错误') ? 'bg-red-50 text-red-700 border border-red-200' :
+                  'bg-blue-50 text-blue-700 border border-blue-200'
+                }`}>
+                  {tagManagerMessage}
+                </div>
+              )}
+            </div>
+
+            <div className="p-6">
+              {(managementMode === 'add' || managementMode === 'edit') && (
+                <div className="mb-6">
+                  <h4 className="text-md font-semibold text-gray-800 mb-4">
+                    {managementMode === 'add' ? '添加新标签' : '编辑标签'}
+                  </h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        英文标签 *
+                      </label>
+                      <input
+                        type="text"
+                        value={newTagData.en}
+                        onChange={(e) => setNewTagData({ ...newTagData, en: e.target.value })}
+                        placeholder="beautiful girl"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        中文翻译 *
+                      </label>
+                      <input
+                        type="text"
+                        value={newTagData.cn}
+                        onChange={(e) => setNewTagData({ ...newTagData, cn: e.target.value })}
+                        placeholder="美丽女孩"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        热度 (0-100)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={newTagData.frequency}
+                        onChange={(e) => setNewTagData({ ...newTagData, frequency: parseInt(e.target.value) || 0 })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 mt-6">
+                    {managementMode === 'add' ? (
+                      <button
+                        onClick={handleAddTag}
+                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                      >
+                        <Plus size={16} />
+                        添加标签
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleSaveTag}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        <Save size={16} />
+                        保存修改
+                      </button>
+                    )}
+                    
+                    <button
+                      onClick={() => {
+                        setManagementMode('view');
+                        setEditingTag(null);
+                        setNewTagData({ en: '', cn: '', frequency: 50 });
+                      }}
+                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                    >
+                      取消
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* 使用说明 */}
+              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                <h4 className="font-medium text-blue-900 mb-2 flex items-center">
+                  <Shield className="text-blue-600 mr-2" size={16} />
+                  管理说明
+                </h4>
+                <ul className="text-sm text-blue-800 space-y-1">
+                  <li>• <span className="font-medium">默认库</span>：系统内置标签，不可编辑或删除</li>
+                  <li>• <span className="font-medium">用户库</span>：自定义标签，支持增删改操作</li>
+                  <li>• <span className="font-medium">导入导出</span>：支持JSON格式的标签库备份和恢复</li>
+                  <li>• <span className="font-medium">数据安全</span>：所有修改都会自动保存到本地存储</li>
+                  <li>• <span className="font-medium">热度影响</span>：影响搜索和推荐排序，建议设置为1-100</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 导入导出面板 */}
+      {showImportExport && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <FileText className="text-purple-600 mr-2" size={20} />
+                  标签库导入导出
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowImportExport(false);
+                    setImportExportData('');
+                  }}
+                  className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* 导出区域 */}
+                <div>
+                  <h4 className="text-md font-semibold text-gray-800 mb-4 flex items-center">
+                    <Download className="text-purple-600 mr-2" size={16} />
+                    导出用户标签库
+                  </h4>
+                  
+                  <div className="space-y-4">
+                    <button
+                      onClick={handleExportDatabase}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    >
+                      <Download size={16} />
+                      生成导出数据
+                    </button>
+                    
+                    {importExportData && (
+                      <>
+                        <textarea
+                          value={importExportData}
+                          readOnly
+                          rows={12}
+                          className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-sm font-mono"
+                          placeholder="导出的JSON数据将显示在这里..."
+                        />
+                        
+                        <button
+                          onClick={downloadExportFile}
+                          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                        >
+                          <Download size={16} />
+                          下载为文件
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* 导入区域 */}
+                <div>
+                  <h4 className="text-md font-semibold text-gray-800 mb-4 flex items-center">
+                    <Upload className="text-orange-600 mr-2" size={16} />
+                    导入标签库
+                  </h4>
+                  
+                  <div className="space-y-4">
+                    <textarea
+                      value={importExportData}
+                      onChange={(e) => setImportExportData(e.target.value)}
+                      rows={12}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm font-mono"
+                      placeholder="请粘贴要导入的JSON数据..."
+                    />
+                    
+                    <button
+                      onClick={handleImportDatabase}
+                      disabled={!importExportData || (typeof importExportData === 'string' && !importExportData.trim())}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Upload size={16} />
+                      导入标签库
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* 使用说明 */}
+              <div className="mt-6 bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                <h4 className="font-medium text-yellow-900 mb-2 flex items-center">
+                  <AlertTriangle className="text-yellow-600 mr-2" size={16} />
+                  注意事项
+                </h4>
+                <ul className="text-sm text-yellow-800 space-y-1">
+                  <li>• <span className="font-medium">导出内容</span>：仅包含用户自定义的标签库，不包含系统默认库</li>
+                  <li>• <span className="font-medium">导入合并</span>：导入的数据会与现有用户库合并，同名分类会覆盖</li>
+                  <li>• <span className="font-medium">数据格式</span>：必须是有效的JSON格式，结构需与导出格式一致</li>
+                  <li>• <span className="font-medium">备份建议</span>：重要数据请定期导出备份</li>
+                  <li>• <span className="font-medium">安全提醒</span>：仅导入来源可信的标签库文件</li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -1356,7 +2261,8 @@ const TagPill = ({
   onTranslate,
   translatedTags,
   hoveredTag,
-  setHoveredTag
+  setHoveredTag,
+  targetLanguage
 }) => {
   const [chineseTranslation, setChineseTranslation] = useState('');
   const [isLoadingTranslation, setIsLoadingTranslation] = useState(false);
@@ -1410,14 +2316,41 @@ const TagPill = ({
   const parsed = parseTag(tag);
   const isHovered = hoveredTag === index;
 
+  // 获取内置中文翻译
+  const getBuiltinChineseTranslation = (englishText) => {
+    const chineseDict = {
+      // 基础词汇
+      'beautiful': '美丽', 'cute': '可爱', 'pretty': '漂亮', 'handsome': '英俊',
+      'girl': '女孩', 'boy': '男孩', 'woman': '女性', 'man': '男性',
+      'cat': '猫', 'dog': '狗', 'wolf': '狼', 'dragon': '龙',
+      'white': '白色', 'black': '黑色', 'red': '红色', 'blue': '蓝色',
+      'hair': '头发', 'eyes': '眼睛', 'face': '脸部', 'smile': '微笑',
+      'anime': '动漫', 'realistic': '写实', 'fantasy': '奇幻',
+      'masterpiece': '杰作', 'best quality': '最佳质量',
+      // 复合词
+      'beautiful girl': '美丽女孩', 'cute girl': '可爱女孩',
+      'white cat': '白猫', 'black cat': '黑猫', 'red wolf': '红狼',
+      'dragon lady': '龙娘', 'long hair': '长发', 'short hair': '短发'
+    };
+    
+    // 完整匹配
+    const exactMatch = chineseDict[englishText.toLowerCase()];
+    if (exactMatch) return exactMatch;
+    
+    // 分词匹配
+    const words = englishText.toLowerCase().split(/\s+/);
+    const translatedWords = words.map(word => chineseDict[word] || word);
+    const hasTranslation = translatedWords.some((word, index) => word !== words[index]);
+    
+    return hasTranslation ? translatedWords.join(' ') : englishText;
+  };
+
   // 自动加载中文翻译
   useEffect(() => {
     const loadChineseTranslation = async () => {
-      // 如果已经有翻译或正在加载，跳过
-      if (chineseTranslation || isLoadingTranslation) return;
-      
       // 检查是否已经是中文
-      if (detectLanguage(parsed.text) === 'zh') {
+      const isAlreadyChinese = /[\u4e00-\u9fff]/.test(parsed.text);
+      if (isAlreadyChinese) {
         setChineseTranslation(parsed.text);
         return;
       }
@@ -1430,24 +2363,33 @@ const TagPill = ({
         return;
       }
       
-      // 异步加载翻译
-      setIsLoadingTranslation(true);
-      try {
-        const result = await onTranslate(tag);
-        const translatedText = typeof result === 'object' && result.translatedText ? result.translatedText : result;
-        setChineseTranslation(translatedText);
-      } catch (error) {
-        console.error('标签翻译失败:', error);
-        setChineseTranslation(parsed.text); // 翻译失败时显示原文
-      } finally {
-        setIsLoadingTranslation(false);
+      // 首先尝试内置词典
+      const builtinTranslation = getBuiltinChineseTranslation(parsed.text);
+      if (builtinTranslation !== parsed.text) {
+        setChineseTranslation(builtinTranslation);
+        return;
+      }
+      
+      // 异步加载在线翻译
+      if (!isLoadingTranslation) {
+        setIsLoadingTranslation(true);
+        try {
+          const result = await onTranslate(tag);
+          const translatedText = typeof result === 'object' && result.translatedText ? result.translatedText : result;
+          setChineseTranslation(translatedText || builtinTranslation);
+        } catch (error) {
+          console.error('在线翻译失败，使用内置翻译:', error);
+          setChineseTranslation(builtinTranslation);
+        } finally {
+          setIsLoadingTranslation(false);
+        }
       }
     };
 
     // 延迟加载翻译，避免同时加载太多
-    const timer = setTimeout(loadChineseTranslation, index * 200);
+    const timer = setTimeout(loadChineseTranslation, index * 50);
     return () => clearTimeout(timer);
-  }, [tag, translatedTags, onTranslate, parsed.text, index, chineseTranslation, isLoadingTranslation]);
+  }, [tag, translatedTags, onTranslate, parsed.text, index, isLoadingTranslation]);
 
   return (
     <div 
@@ -1475,8 +2417,9 @@ const TagPill = ({
             : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
         }`}
       >
+        {/* 英文标签（上层） */}
         <div className="flex items-center gap-2">
-          <span className={`break-all ${isDisabled ? 'line-through' : ''}`}>{tag}</span>
+          <span className={`break-all ${isDisabled ? 'line-through' : ''}`} title="英文标签">{tag}</span>
           <button
             onClick={onDelete}
             className="flex-shrink-0 w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center hover:bg-red-500 transition-colors"
@@ -1485,7 +2428,7 @@ const TagPill = ({
           </button>
         </div>
         
-        {/* 中文翻译显示 */}
+        {/* 中文翻译显示（下层） */}
         <div className={`text-xs px-1 flex items-center gap-1 ${
           isDisabled ? 'text-gray-400 line-through' : 'text-gray-600'
         }`}>
@@ -1494,13 +2437,16 @@ const TagPill = ({
               <RefreshCw size={10} className="animate-spin" />
               <span>翻译中...</span>
             </>
-          ) : chineseTranslation ? (
+          ) : chineseTranslation && chineseTranslation !== parsed.text ? (
             <>
               <Languages size={10} className="text-blue-500" />
-              <span>{chineseTranslation}</span>
+              <span title="中文翻译">中文: {chineseTranslation}</span>
             </>
           ) : (
-            <span className="text-gray-400">点击翻译</span>
+            <>
+              <Languages size={10} className="text-gray-400" />
+              <span className="text-gray-400">点击翻译</span>
+            </>
           )}
         </div>
       </div>
@@ -1508,7 +2454,8 @@ const TagPill = ({
       {/* 悬停编辑栏 */}
       {isHovered && (
         <div 
-          className="absolute top-full left-0 mt-2 bg-white border-2 border-gray-300 rounded-lg shadow-xl p-3 z-30 min-w-max"
+          className="absolute top-full left-0 mt-2 bg-white border-2 border-gray-300 rounded-lg shadow-xl p-3 min-w-max"
+          style={{ zIndex: 9999 }}
           onMouseEnter={() => setHoveredTag(index)}
           onMouseLeave={() => setHoveredTag(null)}
         >
@@ -1626,7 +2573,7 @@ const TagPill = ({
                 <Copy size={12} />
               </button>
               <button
-                onClick={onFavorite}
+                onClick={() => onFavorite(chineseTranslation)}
                 className="w-7 h-7 rounded bg-red-100 hover:bg-red-200 text-red-700 flex items-center justify-center transition-colors"
                 title="收藏"
               >
@@ -1646,12 +2593,14 @@ const TagPill = ({
               <button
                 onClick={async () => {
                   setIsLoadingTranslation(true);
+                  setChineseTranslation(''); // 清空旧翻译
                   try {
                     const result = await onTranslate(tag);
                     const translatedText = typeof result === 'object' && result.translatedText ? result.translatedText : result;
-                    setChineseTranslation(translatedText);
+                    setChineseTranslation(translatedText || getBuiltinChineseTranslation(parsed.text));
                   } catch (error) {
                     console.error('手动翻译失败:', error);
+                    setChineseTranslation(getBuiltinChineseTranslation(parsed.text));
                   } finally {
                     setIsLoadingTranslation(false);
                   }
@@ -1677,7 +2626,7 @@ const TagPill = ({
 /**
  * 标签卡片组件
  */
-const TagCard = ({ tag, onAdd, onToggleFavorite, isFavorited }) => (
+const TagCard = ({ tag, onAdd, onToggleFavorite, isFavorited, onEdit, onDelete, isEditable, showManagement }) => (
   <div className="group bg-gradient-to-r from-gray-50 to-white border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-blue-300 transition-all duration-200 cursor-pointer">
     <div onClick={onAdd} className="flex-1">
       <div className="flex items-start justify-between mb-2">
@@ -1727,6 +2676,28 @@ const TagCard = ({ tag, onAdd, onToggleFavorite, isFavorited }) => (
         </button>
       </div>
     </div>
+    {showManagement && (
+      <div className="flex items-center gap-2 mt-2">
+        {isEditable && (
+          <button
+            onClick={onEdit}
+            className="flex items-center gap-1 px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm"
+          >
+            <Edit size={14} />
+            编辑
+          </button>
+        )}
+        {isEditable && (
+          <button
+            onClick={onDelete}
+            className="flex items-center gap-1 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
+          >
+            <Trash2 size={14} />
+            删除
+          </button>
+        )}
+      </div>
+    )}
   </div>
 );
 

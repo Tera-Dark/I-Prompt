@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, Scale, Lightbulb, Languages, Tag, ArrowLeftRight, Plus, Minus, Copy, CheckCircle } from 'lucide-react';
-import { ASSISTANT_TOOLS } from '../constants/data';
+import { Settings, Scale, Lightbulb, Languages, Tag, ArrowLeftRight, Plus, Copy, CheckCircle } from 'lucide-react';
 import { copyToClipboard } from '../utils/clipboard';
 
 const AssistantToolsPage = () => {

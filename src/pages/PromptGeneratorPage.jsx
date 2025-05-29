@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Wand2, Sparkles, Copy, CheckCircle, AlertCircle, RefreshCw, Heart, TrendingUp } from 'lucide-react';
+import { Brain, Copy, CheckCircle, Loader2, Sparkles, AlertCircle, Heart } from 'lucide-react';
 import { usePromptGenerator } from '../hooks/usePromptGenerator';
 import { QUICK_TAGS, PAINTING_STYLES } from '../constants/data';
 import { APP_CONFIG } from '../constants/config';
@@ -10,7 +10,6 @@ const PromptGeneratorPage = () => {
     generatedPrompt,
     selectedStyle,
     isGenerating,
-    generationSource,
     generationCount,
     apiError,
     validationErrors,
@@ -30,8 +29,8 @@ const PromptGeneratorPage = () => {
     setTimeout(() => setCopyStatus(''), 2000);
   };
 
-  const handleGenerate = async (useApi = false) => {
-    const success = await generatePrompt(useApi);
+  const handleGenerate = async () => {
+    const success = await generatePrompt();
     if (!success && validationErrors.length > 0) {
       // 验证失败的处理
       console.log('Validation failed:', validationErrors);
@@ -43,12 +42,17 @@ const PromptGeneratorPage = () => {
       {/* 页面标题 */}
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center justify-center">
-          <Wand2 className="mr-3 text-purple-600" size={32} />
+          <Brain className="mr-3 text-purple-600" size={32} />
           智能提示词生成器
         </h1>
         <p className="text-gray-600 max-w-2xl mx-auto">
           描述你想要的画面，AI会为你生成专业的提示词，让创作更精准、更高效
         </p>
+        <div className="mt-3 flex items-center justify-center gap-2">
+          <span className="text-sm bg-gradient-to-r from-purple-500 to-blue-500 text-white px-3 py-1 rounded-full">
+            ✨ 由 DeepSeek-R1 驱动
+          </span>
+        </div>
       </div>
 
       {/* 主输入区域 */}
@@ -56,11 +60,6 @@ const PromptGeneratorPage = () => {
         <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
           <Sparkles className="mr-2 text-purple-600" size={20} />
           创作描述
-          {generationSource === 'api' && (
-            <span className="ml-auto text-xs bg-gradient-to-r from-purple-500 to-blue-500 text-white px-2 py-1 rounded-full">
-              AI增强
-            </span>
-          )}
         </h2>
 
         <div className="space-y-4">
@@ -175,36 +174,25 @@ const PromptGeneratorPage = () => {
             )}
           </div>
 
-          {/* 生成按钮组 */}
-          <div className="flex gap-3">
+          {/* 生成按钮 */}
+          <div className="flex justify-center">
             <button
-              onClick={() => handleGenerate(false)}
+              onClick={handleGenerate}
               disabled={!inputText.trim() || isGenerating}
-              className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="w-full max-w-md bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 px-8 rounded-lg font-medium hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               {isGenerating ? (
                 <>
-                  <div className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                  生成中...
+                  <div className="animate-spin inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-3"></div>
+                  DeepSeek AI 生成中...
                 </>
               ) : (
                 <>
-                  <Wand2 className="inline mr-2" size={16} />
-                  快速生成
+                  <Brain className="inline mr-3" size={20} />
+                  DeepSeek AI 智能生成
                 </>
               )}
             </button>
-            
-            {APP_CONFIG.FEATURES.AI_GENERATION && (
-              <button
-                onClick={() => handleGenerate(true)}
-                disabled={!inputText.trim() || isGenerating}
-                className="px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                title="使用AI增强生成"
-              >
-                <Sparkles className="inline" size={16} />
-              </button>
-            )}
           </div>
 
           {/* API错误提示 */}
@@ -225,13 +213,6 @@ const PromptGeneratorPage = () => {
               <h3 className="font-medium text-gray-900 flex items-center">
                 <CheckCircle className="mr-2 text-green-600" size={16} />
                 生成的提示词
-                <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
-                  generationSource === 'api' 
-                    ? 'bg-purple-100 text-purple-700' 
-                    : 'bg-green-100 text-green-700'
-                }`}>
-                  {generationSource === 'api' ? 'AI智能生成' : '本地增强'}
-                </span>
               </h3>
               <div className="flex gap-2">
                 <button 
@@ -248,12 +229,12 @@ const PromptGeneratorPage = () => {
                   )}
                 </button>
                 <button 
-                  onClick={() => handleGenerate()}
+                  onClick={handleGenerate}
                   disabled={isGenerating}
                   className="p-2 hover:bg-green-100 rounded-lg transition-colors group disabled:opacity-50"
                   title="重新生成"
                 >
-                  <RefreshCw size={16} className="text-gray-600 group-hover:text-purple-600" />
+                  <Loader2 size={16} className="text-gray-600 group-hover:text-purple-600" />
                 </button>
                 <button 
                   className="p-2 hover:bg-green-100 rounded-lg transition-colors group"
@@ -270,14 +251,9 @@ const PromptGeneratorPage = () => {
               <div className="flex gap-4">
                 <span>字符数：{generatedPrompt.length}</span>
                 <span>标签数：{generatedPrompt.split(',').length}</span>
-                <span className={`font-medium ${
-                  generationSource === 'api' ? 'text-purple-600' : 'text-green-600'
-                }`}>
-                  {generationSource === 'api' ? '🤖 AI增强' : '⚡ 本地增强'}
-                </span>
               </div>
               <div className="flex items-center gap-2 text-gray-400">
-                <span>{generationSource === 'api' ? 'DeepSeek-R1模型' : '本地算法'}</span>
+                <span>DeepSeek-R1模型</span>
                 {generationCount > 0 && (
                   <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">
                     第{generationCount}次
@@ -292,29 +268,37 @@ const PromptGeneratorPage = () => {
       {/* 使用提示 */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200/50">
         <h3 className="font-medium text-blue-900 mb-3 flex items-center">
-          <TrendingUp className="mr-2 text-blue-600" size={20} />
-          使用技巧
+          <Brain className="mr-2 text-blue-600" size={20} />
+          DeepSeek AI 使用技巧
           <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Pro Tips</span>
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-800">
           <div className="space-y-2">
             <div className="flex items-start">
               <span className="text-blue-500 mr-2 mt-0.5">▸</span>
-              <span>详细描述人物、场景、风格，获得更精确的提示词</span>
+              <span>详细描述人物、场景、风格，AI会生成更精确的提示词</span>
             </div>
             <div className="flex items-start">
               <span className="text-blue-500 mr-2 mt-0.5">▸</span>
-              <span>选择合适的风格会自动添加相关的专业标签</span>
+              <span>选择合适的风格会让AI自动添加相关的专业标签</span>
+            </div>
+            <div className="flex items-start">
+              <span className="text-blue-500 mr-2 mt-0.5">▸</span>
+              <span>可以描述情绪、光影、构图等细节，AI理解能力很强</span>
             </div>
           </div>
           <div className="space-y-2">
             <div className="flex items-start">
               <span className="text-purple-500 mr-2 mt-0.5">★</span>
-              <span>可以多次生成，选择最满意的结果</span>
+              <span>DeepSeek AI 擅长生成高质量的艺术描述词汇</span>
             </div>
             <div className="flex items-start">
               <span className="text-purple-500 mr-2 mt-0.5">★</span>
-              <span>AI增强模式提供更专业的提示词优化</span>
+              <span>支持中文输入，AI会自动转换为专业英文提示词</span>
+            </div>
+            <div className="flex items-start">
+              <span className="text-purple-500 mr-2 mt-0.5">★</span>
+              <span>可以多次生成不同版本，选择最满意的结果</span>
             </div>
           </div>
         </div>
