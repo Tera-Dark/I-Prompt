@@ -72,7 +72,7 @@ const InspirationTool = ({ onCopy, copyStatus, tagDatabase }) => {
   const [generatedPrompts, setGeneratedPrompts] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [favoritePrompts, setFavoritePrompts] = useState([]);
-
+    
   // 加载收藏的提示词
   useEffect(() => {
     const saved = localStorage.getItem('favoritePrompts');
@@ -81,7 +81,7 @@ const InspirationTool = ({ onCopy, copyStatus, tagDatabase }) => {
         setFavoritePrompts(JSON.parse(saved));
       } catch (error) {
         console.error('加载收藏提示词失败:', error);
-      }
+    }
     }
   }, []);
 
@@ -353,8 +353,8 @@ const InspirationTool = ({ onCopy, copyStatus, tagDatabase }) => {
                       selectedStyle === mode.id
                         ? `${mode.color} text-white border-transparent shadow-md`
                         : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
+            }`}
+          >
                     <div className="flex items-center gap-3">
                       <IconComponent size={20} />
                       <div>
@@ -432,7 +432,7 @@ const InspirationTool = ({ onCopy, copyStatus, tagDatabase }) => {
                 onClick={generateInspiration}
                 disabled={isGenerating || !tagDatabase}
                 className="flex items-center gap-2 px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
+        >
                 {isGenerating ? (
                   <RefreshCw size={16} className="animate-spin" />
                 ) : (
@@ -458,7 +458,7 @@ const InspirationTool = ({ onCopy, copyStatus, tagDatabase }) => {
 
       {/* 生成结果 */}
       {generatedPrompts.length > 0 && (
-        <div className="space-y-4">
+      <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900">生成的创意灵感</h3>
             <span className="text-sm text-gray-500">{generatedPrompts.length} 个提示词</span>
