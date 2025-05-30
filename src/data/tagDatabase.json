@@ -1,0 +1,533 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2024-01-01",
+  "description": "I-Prompt 标签库数据 - 统一管理所有标签和翻译",
+  "categories": {
+    "favorites": {
+      "name": "收藏",
+      "icon": "❤️",
+      "color": "bg-red-100 text-red-700",
+      "isDefault": true,
+      "subcategories": {
+        "popular": {
+          "name": "热门标签",
+          "isDefault": true,
+          "tags": [
+            { "id": "pop_001", "en": "masterpiece", "cn": "杰作", "frequency": 95 },
+            { "id": "pop_002", "en": "best quality", "cn": "最佳质量", "frequency": 92 },
+            { "id": "pop_003", "en": "ultra detailed", "cn": "超详细", "frequency": 88 },
+            { "id": "pop_004", "en": "beautiful girl", "cn": "美丽女孩", "frequency": 90 },
+            { "id": "pop_005", "en": "anime style", "cn": "动漫风格", "frequency": 89 },
+            { "id": "pop_006", "en": "highly detailed", "cn": "高度详细", "frequency": 87 },
+            { "id": "pop_007", "en": "perfect anatomy", "cn": "完美解剖", "frequency": 84 },
+            { "id": "pop_008", "en": "sharp focus", "cn": "锐利焦点", "frequency": 86 },
+            { "id": "pop_009", "en": "professional", "cn": "专业级", "frequency": 83 },
+            { "id": "pop_010", "en": "photorealistic", "cn": "照片级写实", "frequency": 81 }
+          ]
+        },
+        "personal": {
+          "name": "个人收藏",
+          "isDefault": false,
+          "tags": []
+        }
+      }
+    },
+    "character": {
+      "name": "人物",
+      "icon": "👤",
+      "color": "bg-blue-100 text-blue-700",
+      "isDefault": true,
+      "subcategories": {
+        "gender": {
+          "name": "性别特征",
+          "isDefault": true,
+          "tags": [
+            { "id": "char_001", "en": "beautiful girl", "cn": "美丽女孩", "frequency": 90 },
+            { "id": "char_002", "en": "cute girl", "cn": "可爱女孩", "frequency": 88 },
+            { "id": "char_003", "en": "handsome boy", "cn": "英俊男孩", "frequency": 75 },
+            { "id": "char_004", "en": "pretty woman", "cn": "漂亮女性", "frequency": 82 },
+            { "id": "char_005", "en": "strong man", "cn": "强壮男性", "frequency": 70 },
+            { "id": "char_006", "en": "elegant lady", "cn": "优雅女士", "frequency": 78 },
+            { "id": "char_007", "en": "young girl", "cn": "年轻女孩", "frequency": 85 },
+            { "id": "char_008", "en": "mature woman", "cn": "成熟女性", "frequency": 72 }
+          ]
+        },
+        "age": {
+          "name": "年龄特征",
+          "isDefault": true,
+          "tags": [
+            { "id": "age_001", "en": "young", "cn": "年轻", "frequency": 85 },
+            { "id": "age_002", "en": "adult", "cn": "成人", "frequency": 80 },
+            { "id": "age_003", "en": "teenager", "cn": "青少年", "frequency": 75 },
+            { "id": "age_004", "en": "child", "cn": "儿童", "frequency": 60 },
+            { "id": "age_005", "en": "elderly", "cn": "老年", "frequency": 45 },
+            { "id": "age_006", "en": "middle-aged", "cn": "中年", "frequency": 55 }
+          ]
+        },
+        "special": {
+          "name": "特殊角色",
+          "isDefault": true,
+          "tags": [
+            { "id": "spec_001", "en": "dragon girl", "cn": "龙娘", "frequency": 65 },
+            { "id": "spec_002", "en": "cat girl", "cn": "猫娘", "frequency": 78 },
+            { "id": "spec_003", "en": "fox girl", "cn": "狐娘", "frequency": 70 },
+            { "id": "spec_004", "en": "wolf girl", "cn": "狼娘", "frequency": 62 },
+            { "id": "spec_005", "en": "rabbit girl", "cn": "兔娘", "frequency": 68 },
+            { "id": "spec_006", "en": "angel", "cn": "天使", "frequency": 72 },
+            { "id": "spec_007", "en": "demon", "cn": "恶魔", "frequency": 69 },
+            { "id": "spec_008", "en": "elf", "cn": "精灵", "frequency": 74 },
+            { "id": "spec_009", "en": "maid", "cn": "女仆", "frequency": 76 },
+            { "id": "spec_010", "en": "shrine maiden", "cn": "巫女", "frequency": 58 }
+          ]
+        }
+      }
+    },
+    "appearance": {
+      "name": "外观",
+      "icon": "✨",
+      "color": "bg-purple-100 text-purple-700",
+      "isDefault": true,
+      "subcategories": {
+        "hair": {
+          "name": "发型发色",
+          "isDefault": true,
+          "tags": [
+            { "id": "hair_001", "en": "long hair", "cn": "长发", "frequency": 92 },
+            { "id": "hair_002", "en": "short hair", "cn": "短发", "frequency": 78 },
+            { "id": "hair_003", "en": "white hair", "cn": "白发", "frequency": 85 },
+            { "id": "hair_004", "en": "black hair", "cn": "黑发", "frequency": 88 },
+            { "id": "hair_005", "en": "red hair", "cn": "红发", "frequency": 82 },
+            { "id": "hair_006", "en": "blue hair", "cn": "蓝发", "frequency": 75 },
+            { "id": "hair_007", "en": "blonde hair", "cn": "金发", "frequency": 80 },
+            { "id": "hair_008", "en": "silver hair", "cn": "银发", "frequency": 70 },
+            { "id": "hair_009", "en": "purple hair", "cn": "紫发", "frequency": 68 },
+            { "id": "hair_010", "en": "green hair", "cn": "绿发", "frequency": 65 },
+            { "id": "hair_011", "en": "pink hair", "cn": "粉发", "frequency": 72 },
+            { "id": "hair_012", "en": "brown hair", "cn": "棕发", "frequency": 76 },
+            { "id": "hair_013", "en": "ponytail", "cn": "马尾", "frequency": 74 },
+            { "id": "hair_014", "en": "twintails", "cn": "双马尾", "frequency": 71 },
+            { "id": "hair_015", "en": "braid", "cn": "麻花辫", "frequency": 58 }
+          ]
+        },
+        "eyes": {
+          "name": "眼部特征",
+          "isDefault": true,
+          "tags": [
+            { "id": "eyes_001", "en": "blue eyes", "cn": "蓝眼", "frequency": 85 },
+            { "id": "eyes_002", "en": "red eyes", "cn": "红眼", "frequency": 78 },
+            { "id": "eyes_003", "en": "green eyes", "cn": "绿眼", "frequency": 72 },
+            { "id": "eyes_004", "en": "golden eyes", "cn": "金眼", "frequency": 70 },
+            { "id": "eyes_005", "en": "white eyes", "cn": "白眼", "frequency": 65 },
+            { "id": "eyes_006", "en": "black eyes", "cn": "黑眼", "frequency": 68 },
+            { "id": "eyes_007", "en": "brown eyes", "cn": "棕眼", "frequency": 75 },
+            { "id": "eyes_008", "en": "purple eyes", "cn": "紫眼", "frequency": 62 },
+            { "id": "eyes_009", "en": "heterochromia", "cn": "异色瞳", "frequency": 58 },
+            { "id": "eyes_010", "en": "black sclera", "cn": "黑色的眼白", "frequency": 45 },
+            { "id": "eyes_011", "en": "white sclera", "cn": "白色的眼白", "frequency": 40 },
+            { "id": "eyes_012", "en": "big eyes", "cn": "大眼", "frequency": 80 },
+            { "id": "eyes_013", "en": "small eyes", "cn": "小眼", "frequency": 55 },
+            { "id": "eyes_014", "en": "narrow eyes", "cn": "细眼", "frequency": 52 }
+          ]
+        },
+        "expression": {
+          "name": "表情动作",
+          "isDefault": true,
+          "tags": [
+            { "id": "expr_001", "en": "smile", "cn": "微笑", "frequency": 90 },
+            { "id": "expr_002", "en": "happy", "cn": "开心", "frequency": 85 },
+            { "id": "expr_003", "en": "sad", "cn": "悲伤", "frequency": 65 },
+            { "id": "expr_004", "en": "angry", "cn": "愤怒", "frequency": 60 },
+            { "id": "expr_005", "en": "surprised", "cn": "惊讶", "frequency": 70 },
+            { "id": "expr_006", "en": "shy", "cn": "害羞", "frequency": 75 },
+            { "id": "expr_007", "en": "serious", "cn": "严肃", "frequency": 68 },
+            { "id": "expr_008", "en": "peaceful", "cn": "平静", "frequency": 72 },
+            { "id": "expr_009", "en": "excited", "cn": "兴奋", "frequency": 74 },
+            { "id": "expr_010", "en": "looking at viewer", "cn": "看向观众", "frequency": 88 }
+          ]
+        }
+      }
+    },
+    "clothing": {
+      "name": "服装",
+      "icon": "👗",
+      "color": "bg-pink-100 text-pink-700",
+      "isDefault": true,
+      "subcategories": {
+        "uniform": {
+          "name": "制服类",
+          "isDefault": true,
+          "tags": [
+            { "id": "cloth_001", "en": "school uniform", "cn": "校服", "frequency": 85 },
+            { "id": "cloth_002", "en": "maid outfit", "cn": "女仆装", "frequency": 78 },
+            { "id": "cloth_003", "en": "nurse outfit", "cn": "护士装", "frequency": 65 },
+            { "id": "cloth_004", "en": "police uniform", "cn": "警察制服", "frequency": 58 },
+            { "id": "cloth_005", "en": "military uniform", "cn": "军装", "frequency": 62 }
+          ]
+        },
+        "casual": {
+          "name": "休闲装",
+          "isDefault": true,
+          "tags": [
+            { "id": "casual_001", "en": "dress", "cn": "连衣裙", "frequency": 82 },
+            { "id": "casual_002", "en": "t-shirt", "cn": "T恤", "frequency": 75 },
+            { "id": "casual_003", "en": "jeans", "cn": "牛仔裤", "frequency": 70 },
+            { "id": "casual_004", "en": "skirt", "cn": "短裙", "frequency": 78 },
+            { "id": "casual_005", "en": "jacket", "cn": "外套", "frequency": 72 }
+          ]
+        },
+        "traditional": {
+          "name": "传统服装",
+          "isDefault": true,
+          "tags": [
+            { "id": "trad_001", "en": "kimono", "cn": "和服", "frequency": 68 },
+            { "id": "trad_002", "en": "cheongsam", "cn": "旗袍", "frequency": 62 },
+            { "id": "trad_003", "en": "hanfu", "cn": "汉服", "frequency": 58 },
+            { "id": "trad_004", "en": "gothic lolita", "cn": "哥特萝莉", "frequency": 65 }
+          ]
+        }
+      }
+    },
+    "style": {
+      "name": "风格",
+      "icon": "🎨",
+      "color": "bg-green-100 text-green-700",
+      "isDefault": true,
+      "subcategories": {
+        "art_style": {
+          "name": "艺术风格",
+          "isDefault": true,
+          "tags": [
+            { "id": "style_001", "en": "anime style", "cn": "动漫风格", "frequency": 95 },
+            { "id": "style_002", "en": "realistic", "cn": "写实", "frequency": 88 },
+            { "id": "style_003", "en": "oil painting", "cn": "油画", "frequency": 72 },
+            { "id": "style_004", "en": "watercolor", "cn": "水彩", "frequency": 68 },
+            { "id": "style_005", "en": "digital art", "cn": "数字艺术", "frequency": 85 },
+            { "id": "style_006", "en": "sketch", "cn": "素描", "frequency": 65 },
+            { "id": "style_007", "en": "cartoon", "cn": "卡通", "frequency": 75 },
+            { "id": "style_008", "en": "3d render", "cn": "3D渲染", "frequency": 70 }
+          ]
+        },
+        "theme": {
+          "name": "主题风格",
+          "isDefault": true,
+          "tags": [
+            { "id": "theme_001", "en": "fantasy", "cn": "奇幻", "frequency": 82 },
+            { "id": "theme_002", "en": "sci-fi", "cn": "科幻", "frequency": 75 },
+            { "id": "theme_003", "en": "cyberpunk", "cn": "赛博朋克", "frequency": 68 },
+            { "id": "theme_004", "en": "steampunk", "cn": "蒸汽朋克", "frequency": 62 },
+            { "id": "theme_005", "en": "medieval", "cn": "中世纪", "frequency": 65 },
+            { "id": "theme_006", "en": "modern", "cn": "现代", "frequency": 78 },
+            { "id": "theme_007", "en": "futuristic", "cn": "未来派", "frequency": 70 },
+            { "id": "theme_008", "en": "retro", "cn": "复古", "frequency": 72 }
+          ]
+        }
+      }
+    },
+    "quality": {
+      "name": "质量",
+      "icon": "⭐",
+      "color": "bg-yellow-100 text-yellow-700",
+      "isDefault": true,
+      "subcategories": {
+        "technical": {
+          "name": "技术质量",
+          "isDefault": true,
+          "tags": [
+            { "id": "qual_001", "en": "masterpiece", "cn": "杰作", "frequency": 95 },
+            { "id": "qual_002", "en": "best quality", "cn": "最佳质量", "frequency": 92 },
+            { "id": "qual_003", "en": "ultra detailed", "cn": "超详细", "frequency": 88 },
+            { "id": "qual_004", "en": "highly detailed", "cn": "高度详细", "frequency": 87 },
+            { "id": "qual_005", "en": "perfect anatomy", "cn": "完美解剖", "frequency": 84 },
+            { "id": "qual_006", "en": "sharp focus", "cn": "锐利焦点", "frequency": 86 },
+            { "id": "qual_007", "en": "professional", "cn": "专业级", "frequency": 83 },
+            { "id": "qual_008", "en": "photorealistic", "cn": "照片级写实", "frequency": 81 },
+            { "id": "qual_009", "en": "8k", "cn": "8K分辨率", "frequency": 78 },
+            { "id": "qual_010", "en": "4k", "cn": "4K分辨率", "frequency": 75 }
+          ]
+        },
+        "negative": {
+          "name": "负面质量",
+          "isDefault": true,
+          "tags": [
+            { "id": "neg_001", "en": "low quality", "cn": "低质量", "frequency": 85 },
+            { "id": "neg_002", "en": "blurry", "cn": "模糊", "frequency": 82 },
+            { "id": "neg_003", "en": "bad anatomy", "cn": "错误解剖", "frequency": 88 },
+            { "id": "neg_004", "en": "extra fingers", "cn": "多余手指", "frequency": 90 },
+            { "id": "neg_005", "en": "bad hands", "cn": "错误手部", "frequency": 87 },
+            { "id": "neg_006", "en": "deformed", "cn": "变形", "frequency": 85 },
+            { "id": "neg_007", "en": "ugly", "cn": "丑陋", "frequency": 80 },
+            { "id": "neg_008", "en": "duplicate", "cn": "重复", "frequency": 75 }
+          ]
+        }
+      }
+    },
+    "environment": {
+      "name": "环境",
+      "icon": "🌍",
+      "color": "bg-teal-100 text-teal-700",
+      "isDefault": true,
+      "subcategories": {
+        "location": {
+          "name": "地点场景",
+          "isDefault": true,
+          "tags": [
+            { "id": "env_001", "en": "outdoors", "cn": "户外", "frequency": 85 },
+            { "id": "env_002", "en": "indoors", "cn": "室内", "frequency": 82 },
+            { "id": "env_003", "en": "forest", "cn": "森林", "frequency": 75 },
+            { "id": "env_004", "en": "beach", "cn": "海滩", "frequency": 78 },
+            { "id": "env_005", "en": "city", "cn": "城市", "frequency": 80 },
+            { "id": "env_006", "en": "school", "cn": "学校", "frequency": 72 },
+            { "id": "env_007", "en": "bedroom", "cn": "卧室", "frequency": 70 },
+            { "id": "env_008", "en": "garden", "cn": "花园", "frequency": 68 }
+          ]
+        },
+        "weather": {
+          "name": "天气光照",
+          "isDefault": true,
+          "tags": [
+            { "id": "weather_001", "en": "sunlight", "cn": "阳光", "frequency": 85 },
+            { "id": "weather_002", "en": "moonlight", "cn": "月光", "frequency": 72 },
+            { "id": "weather_003", "en": "sunset", "cn": "日落", "frequency": 78 },
+            { "id": "weather_004", "en": "sunrise", "cn": "日出", "frequency": 70 },
+            { "id": "weather_005", "en": "cloudy", "cn": "多云", "frequency": 65 },
+            { "id": "weather_006", "en": "rainy", "cn": "雨天", "frequency": 62 },
+            { "id": "weather_007", "en": "snowy", "cn": "雪天", "frequency": 68 }
+          ]
+        }
+      }
+    }
+  },
+  "translations": {
+    "description": "英文到中文的翻译映射表",
+    "mapping": {
+      "1girl": "一个女孩",
+      "masterpiece": "杰作",
+      "best quality": "最佳质量",
+      "ultra detailed": "超详细",
+      "beautiful girl": "美丽女孩",
+      "anime style": "动漫风格",
+      "highly detailed": "高度详细",
+      "perfect anatomy": "完美解剖",
+      "sharp focus": "锐利焦点",
+      "professional": "专业级",
+      "photorealistic": "照片级写实",
+      "white hair": "白发",
+      "long hair": "长发",
+      "dragon girl": "龙娘",
+      "white eyes": "白眼",
+      "red eyes": "红眼",
+      "blue eyes": "蓝眼",
+      "green eyes": "绿眼",
+      "brown eyes": "棕眼",
+      "golden eyes": "金眼",
+      "black eyes": "黑眼",
+      "black sclera": "黑色的眼白",
+      "white sclera": "白色的眼白",
+      "heterochromia": "异色瞳",
+      "school uniform": "校服",
+      "casual wear": "休闲装",
+      "maid outfit": "女仆装",
+      "formal wear": "正装",
+      "kimono": "和服",
+      "smile": "微笑",
+      "happy": "开心",
+      "shy": "害羞",
+      "serious": "严肃",
+      "surprised": "惊讶",
+      "standing": "站立",
+      "sitting": "坐着",
+      "walking": "行走",
+      "looking at viewer": "看向观众",
+      "high quality": "高质量",
+      "8k": "8K分辨率",
+      "detailed": "详细的",
+      "realistic": "写实的",
+      "short hair": "短发",
+      "black hair": "黑发",
+      "brown hair": "棕发",
+      "blonde hair": "金发",
+      "red hair": "红发",
+      "blue hair": "蓝发",
+      "green hair": "绿发",
+      "purple hair": "紫发",
+      "pink hair": "粉发",
+      "silver hair": "银发",
+      "twin tails": "双马尾",
+      "ponytail": "马尾",
+      
+      "beautiful": "美丽的",
+      "cute": "可爱的",
+      "girl": "女孩",
+      "boy": "男孩",
+      "woman": "女人",
+      "man": "男人",
+      "handsome": "帅气的",
+      "elegant": "优雅的",
+      "gorgeous": "华丽的",
+      "pretty": "漂亮的",
+      
+      "1boy": "一个男孩",
+      "1man": "一个男人",
+      "1woman": "一个女人",
+      "solo": "单人",
+      "multiple girls": "多个女孩",
+      "multiple boys": "多个男孩",
+      
+      "portrait": "肖像",
+      "full body": "全身",
+      "upper body": "上半身",
+      "face focus": "面部特写",
+      "close-up": "特写",
+      "wide shot": "远景",
+      
+      "outdoors": "户外",
+      "indoors": "室内",
+      "nature": "自然",
+      "forest": "森林",
+      "beach": "海滩",
+      "mountain": "山脉",
+      "city": "城市",
+      "sky": "天空",
+      "ocean": "海洋",
+      "sunset": "日落",
+      "sunrise": "日出",
+      "night": "夜晚",
+      "day": "白天",
+      
+      "oil painting": "油画",
+      "watercolor": "水彩画",
+      "sketch": "素描",
+      "illustration": "插画",
+      "digital art": "数字艺术",
+      "concept art": "概念艺术",
+      "traditional art": "传统艺术",
+      "painting": "绘画",
+      
+      "photorealistic": "照片写实",
+      "hyperrealistic": "超写实",
+      "semi-realistic": "半写实",
+      "cartoon": "卡通",
+      "chibi": "Q版",
+      "fantasy": "奇幻",
+      "sci-fi": "科幻",
+      "cyberpunk": "赛博朋克",
+      "steampunk": "蒸汽朋克",
+      
+      "cinematic": "电影级",
+      "cinematic lighting": "电影级光照",
+      "dramatic lighting": "戏剧性光照",
+      "soft lighting": "柔和光照",
+      "natural lighting": "自然光照",
+      "rim lighting": "轮廓光",
+      "volumetric lighting": "体积光",
+      "golden hour": "黄金时段",
+      
+      "4k": "4K分辨率",
+      "8k": "8K分辨率",
+      "high resolution": "高分辨率",
+      "uhd": "超高清",
+      "hdr": "高动态范围",
+      "raw": "原始格式",
+      
+      "soft": "柔和的",
+      "vibrant": "鲜艳的",
+      "warm colors": "暖色调",
+      "cool colors": "冷色调",
+      "pastel colors": "粉彩色调",
+      "monochrome": "单色",
+      "black and white": "黑白",
+      "colorful": "多彩的",
+      
+      "texture": "纹理",
+      "smooth": "光滑的",
+      "rough": "粗糙的",
+      "glossy": "光泽的",
+      "matte": "哑光的",
+      "metallic": "金属的",
+      "transparent": "透明的",
+      "translucent": "半透明的",
+      
+      "motion blur": "运动模糊",
+      "depth of field": "景深",
+      "bokeh": "背景虚化",
+      "lens flare": "镜头光晕",
+      "particle effects": "粒子效果",
+      "glow": "发光",
+      "sparkle": "闪光",
+      
+      "clothing": "服装",
+      "dress": "连衣裙",
+      "shirt": "衬衫",
+      "pants": "裤子",
+      "skirt": "裙子",
+      "jacket": "夹克",
+      "coat": "外套",
+      "hat": "帽子",
+      "shoes": "鞋子",
+      "accessories": "配饰",
+      "jewelry": "首饰",
+      
+      "pose": "姿势",
+      "dynamic pose": "动态姿势",
+      "action": "动作",
+      "dancing": "跳舞",
+      "running": "跑步",
+      "jumping": "跳跃",
+      "flying": "飞行",
+      "floating": "漂浮",
+      
+      "expression": "表情",
+      "emotion": "情感",
+      "angry": "愤怒",
+      "sad": "悲伤",
+      "excited": "兴奋",
+      "calm": "平静",
+      "confident": "自信",
+      "mysterious": "神秘",
+      
+      "weapon": "武器",
+      "sword": "剑",
+      "gun": "枪",
+      "magic": "魔法",
+      "spell": "咒语",
+      "fire": "火",
+      "water": "水",
+      "ice": "冰",
+      "lightning": "闪电",
+      "energy": "能量",
+      
+      "animal": "动物",
+      "cat": "猫",
+      "dog": "狗",
+      "bird": "鸟",
+      "dragon": "龙",
+      "wolf": "狼",
+      "horse": "马",
+      "butterfly": "蝴蝶",
+      "fish": "鱼",
+      
+      "fantasy creature": "奇幻生物",
+      "angel": "天使",
+      "demon": "恶魔",
+      "fairy": "仙女",
+      "elf": "精灵",
+      "witch": "女巫",
+      "vampire": "吸血鬼",
+      "mermaid": "美人鱼",
+      "robot": "机器人",
+      
+      "dig": "挖掘",
+      "volvo": "沃尔沃",
+      "big four": "四大",
+      "annoying frenchman": "烦人的法国人",
+      
+      "david": "大卫",
+      "corporate": "企业的",
+      "copernicus": "哥白尼",
+      "heaven and earth": "天地",
+      "education": "教育",
+      "heaven": "天堂",
+      "earth": "地球"
+    }
+  }
+} 

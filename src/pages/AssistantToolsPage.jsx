@@ -1,10 +1,17 @@
-import React, { useState } from 'react';
-import { Settings, Scale, Lightbulb, Languages, Tag, ArrowLeftRight, Plus, Copy, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Lightbulb, Copy, CheckCircle, RefreshCw, Sparkles, Shuffle, Download, Eye, Heart, Star, Palette, Camera, Wand2 } from 'lucide-react';
 import { copyToClipboard } from '../utils/clipboard';
+import { getTagDatabase } from '../services/tagDatabaseService';
 
 const AssistantToolsPage = () => {
-  const [activeToolId, setActiveToolId] = useState('weight');
   const [copyStatus, setCopyStatus] = useState('');
+  const [tagDatabase, setTagDatabase] = useState(null);
+
+  useEffect(() => {
+    // 加载标签库数据
+    const database = getTagDatabase();
+    setTagDatabase(database);
+  }, []);
 
   const handleCopy = async (text) => {
     const success = await copyToClipboard(text);
@@ -12,59 +19,41 @@ const AssistantToolsPage = () => {
     setTimeout(() => setCopyStatus(''), 2000);
   };
 
-  const tools = [
-    { id: 'weight', name: '权重调节', icon: Scale, component: WeightAdjustTool },
-    { id: 'inspiration', name: '灵感生成', icon: Lightbulb, component: InspirationTool },
-    { id: 'translate', name: '翻译工具', icon: Languages, component: TranslateTool },
-    { id: 'tags', name: '标签补全', icon: Tag, component: TagCompletionTool }
-  ];
-
-  const ActiveTool = tools.find(tool => tool.id === activeToolId)?.component || WeightAdjustTool;
-
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50">
       {/* 页面标题 */}
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center justify-center">
-          <Settings className="mr-3 text-orange-600" size={32} />
-          辅助工具
-        </h1>
-        <p className="text-gray-600 max-w-2xl mx-auto">
-          专业的AI绘画辅助工具集，提供权重调节、灵感生成、翻译和标签补全等实用功能
-        </p>
-      </div>
-
-      {/* 工具导航 */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-orange-100/50 p-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {tools.map(tool => {
-            const IconComponent = tool.icon;
-            return (
-              <button
-                key={tool.id}
-                onClick={() => setActiveToolId(tool.id)}
-                className={`p-4 rounded-lg border transition-all ${
-                  activeToolId === tool.id
-                    ? 'bg-orange-600 text-white border-orange-600 shadow-md'
-                    : 'bg-white hover:bg-orange-50 text-gray-700 border-gray-200 hover:border-orange-300'
-                }`}
-              >
-                <IconComponent className="mx-auto mb-2" size={24} />
-                <p className="text-sm font-medium">{tool.name}</p>
-              </button>
-            );
-          })}
+      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 px-6 py-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2 flex items-center">
+                <Lightbulb className="text-orange-600 mr-2" size={28} />
+                灵感生成器
+              </h1>
+              <p className="text-gray-600 text-sm">
+                基于标签库的智能创意灵感生成，为您的AI绘画提供无限创意灵感
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="text-right">
+                <div className="text-xs text-gray-500">智能模式</div>
+                <div className="text-sm font-semibold text-orange-600">AI驱动</div>
+              </div>
+              <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-yellow-600 rounded-lg flex items-center justify-center">
+                <Lightbulb className="text-white" size={20} />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* 活动工具内容 */}
-      <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200 p-6">
-        <ActiveTool onCopy={handleCopy} copyStatus={copyStatus} />
+      <div className="max-w-7xl mx-auto p-6">
+        <InspirationTool onCopy={handleCopy} copyStatus={copyStatus} tagDatabase={tagDatabase} />
       </div>
 
       {/* 复制状态提示 */}
       {copyStatus && (
-        <div className={`fixed bottom-4 right-4 px-4 py-2 rounded-lg text-white text-sm transition-all duration-300 shadow-lg ${
+        <div className={`fixed bottom-4 right-4 px-4 py-2 rounded-lg text-white text-sm transition-all duration-300 shadow-lg z-50 ${
           copyStatus === 'copied' ? 'bg-green-600' : 'bg-red-600'
         }`}>
           {copyStatus === 'copied' ? '✅ 已复制到剪贴板' : '❌ 复制失败'}
@@ -75,436 +64,529 @@ const AssistantToolsPage = () => {
 };
 
 /**
- * 权重调节工具
+ * 智能灵感生成工具
  */
-const WeightAdjustTool = ({ onCopy, copyStatus }) => {
-  const [inputText, setInputText] = useState('');
-  const [adjustedText, setAdjustedText] = useState('');
-
-  const adjustWeight = (text, weight) => {
-    if (!text.trim()) return '';
-    
-    // 根据权重格式化
-    if (weight > 1) {
-      return `(${text}:${weight})`;
-    } else if (weight < 1) {
-      return `[${text}:${weight}]`;
-    } else {
-      return text;
-    }
-  };
-
-  const handleQuickAdjust = (weight) => {
-    if (!inputText.trim()) return;
-    
-    const tags = inputText.split(',').map(tag => tag.trim()).filter(tag => tag);
-    const adjustedTags = tags.map(tag => adjustWeight(tag, weight));
-    setAdjustedText(adjustedTags.join(', '));
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3 mb-4">
-        <Scale className="text-orange-600" size={24} />
-        <h2 className="text-xl font-bold text-gray-900">权重调节工具</h2>
-      </div>
-      
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">输入提示词</label>
-          <textarea
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            placeholder="输入需要调节权重的提示词，用逗号分隔..."
-            className="w-full h-24 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">快速权重调节</label>
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-            {[0.5, 0.7, 0.9, 1.1, 1.3, 1.5].map(weight => (
-              <button
-                key={weight}
-                onClick={() => handleQuickAdjust(weight)}
-                className={`px-3 py-2 text-sm rounded-lg border transition-all ${
-                  weight === 1 
-                    ? 'bg-gray-100 text-gray-700 border-gray-300'
-                    : weight > 1 
-                    ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
-                    : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
-                }`}
-              >
-                {weight > 1 ? '↑' : weight < 1 ? '↓' : '='} {weight}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {adjustedText && (
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="font-medium text-gray-900">调节结果</h3>
-              <button
-                onClick={() => onCopy(adjustedText)}
-                className="p-2 bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition-colors"
-              >
-                {copyStatus === 'copied' ? <CheckCircle size={16} /> : <Copy size={16} />}
-              </button>
-            </div>
-            <p className="text-sm font-mono text-gray-700">{adjustedText}</p>
-          </div>
-        )}
-
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="font-medium text-blue-900 mb-2">权重语法说明</h4>
-          <ul className="text-sm text-blue-800 space-y-1">
-            <li>• <code>(keyword:1.5)</code> - 增强权重到1.5倍</li>
-            <li>• <code>[keyword:0.7]</code> - 降低权重到0.7倍</li>
-            <li>• <code>((keyword))</code> - 双重括号增强</li>
-            <li>• <code>[[keyword]]</code> - 双重方括号减弱</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-/**
- * 灵感生成工具
- */
-const InspirationTool = ({ onCopy, copyStatus }) => {
-  const [selectedTheme, setSelectedTheme] = useState('');
-  const [generatedIdeas, setGeneratedIdeas] = useState([]);
+const InspirationTool = ({ onCopy, copyStatus, tagDatabase }) => {
+  const [selectedStyle, setSelectedStyle] = useState('random');
+  const [selectedComplexity, setSelectedComplexity] = useState('medium');
+  const [generatedPrompts, setGeneratedPrompts] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [favoritePrompts, setFavoritePrompts] = useState([]);
 
-  const themes = [
-    { id: 'fantasy', name: '奇幻魔法', keywords: ['魔法', '精灵', '龙', '城堡', '魔法师'] },
-    { id: 'scifi', name: '科幻未来', keywords: ['机器人', '太空', '霓虹灯', '赛博朋克', '外星人'] },
-    { id: 'nature', name: '自然风光', keywords: ['森林', '山脉', '海洋', '花朵', '动物'] },
-    { id: 'anime', name: '动漫风格', keywords: ['少女', '校园', '和服', '樱花', '猫咪'] },
-    { id: 'historical', name: '历史古典', keywords: ['宫殿', '武士', '古装', '传统', '文化'] }
+  // 加载收藏的提示词
+  useEffect(() => {
+    const saved = localStorage.getItem('favoritePrompts');
+    if (saved) {
+      try {
+        setFavoritePrompts(JSON.parse(saved));
+      } catch (error) {
+        console.error('加载收藏提示词失败:', error);
+      }
+    }
+  }, []);
+
+  // 保存收藏的提示词
+  useEffect(() => {
+    localStorage.setItem('favoritePrompts', JSON.stringify(favoritePrompts));
+  }, [favoritePrompts]);
+
+  // 灵感生成模式
+  const inspirationModes = [
+    { 
+      id: 'random', 
+      name: '随机灵感', 
+      icon: Shuffle, 
+      description: '随机组合不同类型的标签',
+      color: 'bg-purple-500'
+    },
+    { 
+      id: 'character', 
+      name: '人物创作', 
+      icon: Eye, 
+      description: '专注于人物角色设计',
+      color: 'bg-blue-500'
+    },
+    { 
+      id: 'scene', 
+      name: '场景构建', 
+      icon: Camera, 
+      description: '创建环境和背景场景',
+      color: 'bg-green-500'
+    },
+    { 
+      id: 'style', 
+      name: '风格探索', 
+      icon: Palette, 
+      description: '尝试不同的艺术风格',
+      color: 'bg-pink-500'
+    },
+    { 
+      id: 'fantasy', 
+      name: '奇幻世界', 
+      icon: Wand2, 
+      description: '魔法与奇幻元素',
+      color: 'bg-indigo-500'
+    }
   ];
 
-  const generateIdeas = async (theme) => {
+  // 复杂度设置
+  const complexityLevels = [
+    { id: 'simple', name: '简约', tagCount: '3-5个标签', description: '简洁明了的基础提示词' },
+    { id: 'medium', name: '均衡', tagCount: '6-10个标签', description: '平衡的细节和复杂度' },
+    { id: 'complex', name: '丰富', tagCount: '11-15个标签', description: '详细且复杂的描述' },
+    { id: 'detailed', name: '极致', tagCount: '16+个标签', description: '极其详细的专业级提示词' }
+  ];
+
+  // 从标签库获取随机标签
+  const getRandomTagsFromCategory = (categoryKey, count = 1) => {
+    if (!tagDatabase || !tagDatabase[categoryKey]) return [];
+    
+    const category = tagDatabase[categoryKey];
+    const allTags = [];
+    
+    // 收集该分类下的所有标签
+    if (category.subcategories) {
+      Object.values(category.subcategories).forEach(subcategory => {
+        if (subcategory.tags) {
+          allTags.push(...subcategory.tags);
+        }
+      });
+    }
+    
+    // 随机选择标签
+    const shuffled = allTags.sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count).map(tag => tag.en || tag);
+  };
+
+  // 获取高频标签
+  const getPopularTags = (categoryKey, count = 2) => {
+    if (!tagDatabase || !tagDatabase[categoryKey]) return [];
+    
+    const category = tagDatabase[categoryKey];
+    const allTags = [];
+    
+    if (category.subcategories) {
+      Object.values(category.subcategories).forEach(subcategory => {
+        if (subcategory.tags) {
+          allTags.push(...subcategory.tags);
+        }
+      });
+    }
+    
+    // 按频率排序并选择前几个
+    const sortedByFrequency = allTags
+      .filter(tag => tag.frequency)
+      .sort((a, b) => b.frequency - a.frequency);
+    
+    return sortedByFrequency.slice(0, count).map(tag => tag.en || tag);
+  };
+
+  // 生成基于模式的提示词
+  const generatePromptByMode = (mode, complexity) => {
+    if (!tagDatabase) return '';
+
+    const complexityMap = {
+      'simple': { total: 4, quality: 1, main: 2, detail: 1 },
+      'medium': { total: 8, quality: 2, main: 4, detail: 2 },
+      'complex': { total: 13, quality: 3, main: 6, detail: 4 },
+      'detailed': { total: 18, quality: 4, main: 8, detail: 6 }
+    };
+
+    const config = complexityMap[complexity];
+    let tags = [];
+
+    // 必须的质量标签
+    const qualityTags = getPopularTags('quality', config.quality);
+    tags.push(...qualityTags);
+
+    switch (mode) {
+      case 'character':
+        // 人物模式：性别+外观+表情+服装
+        tags.push(...getRandomTagsFromCategory('character', 2));
+        tags.push(...getRandomTagsFromCategory('appearance', Math.ceil(config.main / 2)));
+        tags.push(...getRandomTagsFromCategory('clothing', Math.floor(config.main / 2)));
+        if (config.detail > 0) {
+          tags.push(...getRandomTagsFromCategory('environment', Math.min(2, config.detail)));
+        }
+        break;
+
+      case 'scene':
+        // 场景模式：环境+天气+风格
+        tags.push(...getRandomTagsFromCategory('environment', config.main));
+        tags.push(...getRandomTagsFromCategory('style', Math.ceil(config.detail / 2)));
+        if (config.detail > 2) {
+          tags.push(...getRandomTagsFromCategory('character', 1));
+        }
+        break;
+
+      case 'style':
+        // 风格模式：艺术风格+质量+色彩
+        tags.push(...getRandomTagsFromCategory('style', config.main));
+        if (config.detail > 0) {
+          tags.push(...getRandomTagsFromCategory('appearance', config.detail));
+        }
+        break;
+
+      case 'fantasy':
+        // 奇幻模式：特殊角色+魔法元素+奇幻场景
+        tags.push(...getRandomTagsFromCategory('character', 1));
+        const specialTags = getRandomTagsFromCategory('character', 2).filter(tag => 
+          tag.includes('dragon') || tag.includes('elf') || tag.includes('angel') || 
+          tag.includes('demon') || tag.includes('fairy') || tag.includes('witch')
+        );
+        tags.push(...specialTags);
+        tags.push(...getRandomTagsFromCategory('environment', Math.ceil(config.main / 2)));
+        tags.push(...getRandomTagsFromCategory('style', config.detail));
+        break;
+
+      default: // random
+        // 随机模式：从各个分类随机选择
+        const categories = Object.keys(tagDatabase);
+        const selectedCategories = categories.sort(() => 0.5 - Math.random()).slice(0, 4);
+        
+        selectedCategories.forEach(category => {
+          if (category !== 'quality') {
+            const count = Math.ceil(config.main / selectedCategories.length);
+            tags.push(...getRandomTagsFromCategory(category, count));
+          }
+        });
+        break;
+    }
+
+    // 去重并限制数量
+    const uniqueTags = [...new Set(tags)].filter(tag => tag);
+    const finalTags = uniqueTags.slice(0, config.total);
+
+    return finalTags.join(', ');
+  };
+
+  // 生成多个灵感提示词
+  const generateInspiration = () => {
+    if (!tagDatabase) {
+      console.warn('标签库未加载');
+      return;
+    }
+
     setIsGenerating(true);
-    setGeneratedIdeas([]);
+    setGeneratedPrompts([]);
 
     // 模拟生成过程
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    setTimeout(() => {
+      const prompts = [];
+      
+      // 生成4个不同的提示词
+      for (let i = 0; i < 4; i++) {
+        const prompt = generatePromptByMode(selectedStyle, selectedComplexity);
+        if (prompt) {
+          prompts.push({
+            id: Date.now() + i,
+            text: prompt,
+            mode: selectedStyle,
+            complexity: selectedComplexity,
+            timestamp: new Date().toLocaleTimeString()
+          });
+        }
+      }
 
-    const themeData = themes.find(t => t.id === theme);
-    if (!themeData) return;
-
-    const ideas = [
-      `${themeData.keywords[0]}主题的概念艺术`,
-      `${themeData.keywords[1]}与${themeData.keywords[2]}的结合`,
-      `${themeData.keywords[3]}背景下的${themeData.keywords[4]}`,
-      `梦幻般的${themeData.keywords[0]}场景`,
-      `${themeData.keywords[2]}风格的角色设计`
-    ];
-
-    setGeneratedIdeas(ideas);
-    setIsGenerating(false);
+      setGeneratedPrompts(prompts);
+      setIsGenerating(false);
+    }, 1500);
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3 mb-4">
-        <Lightbulb className="text-yellow-600" size={24} />
-        <h2 className="text-xl font-bold text-gray-900">灵感生成器</h2>
-      </div>
-
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">选择主题</label>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {themes.map(theme => (
-              <button
-                key={theme.id}
-                onClick={() => {
-                  setSelectedTheme(theme.id);
-                  generateIdeas(theme.id);
-                }}
-                className={`p-4 text-left rounded-lg border transition-all ${
-                  selectedTheme === theme.id
-                    ? 'bg-yellow-600 text-white border-yellow-600'
-                    : 'bg-white hover:bg-yellow-50 text-gray-700 border-gray-200 hover:border-yellow-300'
-                }`}
-              >
-                <h3 className="font-medium">{theme.name}</h3>
-                <p className="text-sm opacity-75 mt-1">
-                  {theme.keywords.join(' • ')}
-                </p>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {isGenerating && (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-600 mx-auto mb-3"></div>
-            <p className="text-gray-600">正在生成创意灵感...</p>
-          </div>
-        )}
-
-        {generatedIdeas.length > 0 && (
-          <div className="space-y-3">
-            <h3 className="font-medium text-gray-900">生成的创意灵感</h3>
-            {generatedIdeas.map((idea, index) => (
-              <div key={index} className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <div className="flex justify-between items-center">
-                  <p className="text-gray-700">{idea}</p>
-                  <button
-                    onClick={() => onCopy(idea)}
-                    className="p-2 bg-yellow-100 text-yellow-600 rounded-lg hover:bg-yellow-200 transition-colors"
-                  >
-                    <Copy size={14} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-/**
- * 翻译工具
- */
-const TranslateTool = ({ onCopy, copyStatus }) => {
-  const [inputText, setInputText] = useState('');
-  const [translatedText, setTranslatedText] = useState('');
-  const [direction, setDirection] = useState('cn-en'); // cn-en 或 en-cn
-
-  const translations = {
-    '美丽': 'beautiful',
-    '可爱': 'cute',
-    '女孩': 'girl',
-    '男孩': 'boy',
-    '猫': 'cat',
-    '狗': 'dog',
-    '花': 'flower',
-    '树': 'tree',
-    '天空': 'sky',
-    '海洋': 'ocean',
-    '森林': 'forest',
-    '城市': 'city',
-    '夜晚': 'night',
-    '白天': 'day',
-    '阳光': 'sunlight',
-    '月亮': 'moon',
-    '星星': 'stars',
-    '房子': 'house',
-    '汽车': 'car'
-  };
-
-  const translate = () => {
-    if (!inputText.trim()) return;
-
-    if (direction === 'cn-en') {
-      let result = inputText;
-      Object.entries(translations).forEach(([cn, en]) => {
-        const regex = new RegExp(cn, 'g');
-        result = result.replace(regex, en);
-      });
-      setTranslatedText(result);
-    } else {
-      let result = inputText;
-      Object.entries(translations).forEach(([cn, en]) => {
-        const regex = new RegExp(en, 'gi');
-        result = result.replace(regex, cn);
-      });
-      setTranslatedText(result);
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3 mb-4">
-        <Languages className="text-blue-600" size={24} />
-        <h2 className="text-xl font-bold text-gray-900">翻译工具</h2>
-      </div>
-
-      <div className="space-y-4">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => setDirection('cn-en')}
-            className={`px-4 py-2 rounded-lg transition-all ${
-              direction === 'cn-en'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            中文 → 英文
-          </button>
-          <ArrowLeftRight className="text-gray-400" size={20} />
-          <button
-            onClick={() => setDirection('en-cn')}
-            className={`px-4 py-2 rounded-lg transition-all ${
-              direction === 'en-cn'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            英文 → 中文
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {direction === 'cn-en' ? '中文输入' : '英文输入'}
-            </label>
-            <textarea
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              placeholder={direction === 'cn-en' ? '输入中文提示词...' : '输入英文提示词...'}
-              className="w-full h-32 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {direction === 'cn-en' ? '英文输出' : '中文输出'}
-            </label>
-            <div className="relative">
-              <textarea
-                value={translatedText}
-                readOnly
-                placeholder="翻译结果将显示在这里..."
-                className="w-full h-32 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 resize-none"
-              />
-              {translatedText && (
-                <button
-                  onClick={() => onCopy(translatedText)}
-                  className="absolute top-2 right-2 p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
-                >
-                  {copyStatus === 'copied' ? <CheckCircle size={16} /> : <Copy size={16} />}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <button
-          onClick={translate}
-          disabled={!inputText.trim()}
-          className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          翻译
-        </button>
-      </div>
-    </div>
-  );
-};
-
-/**
- * 标签补全工具
- */
-const TagCompletionTool = ({ onCopy, copyStatus }) => {
-  const [inputTags, setInputTags] = useState('');
-  const [suggestions, setSuggestions] = useState([]);
-
-  const commonTags = {
-    quality: ['masterpiece', 'best quality', 'ultra detailed', 'high resolution', 'professional'],
-    lighting: ['cinematic lighting', 'soft lighting', 'dramatic lighting', 'natural lighting'],
-    composition: ['perfect composition', 'rule of thirds', 'dynamic angle', 'close-up'],
-    style: ['anime style', 'realistic', 'oil painting', 'watercolor', 'digital art']
-  };
-
-  const generateSuggestions = () => {
-    if (!inputTags.trim()) return;
-
-    const currentTags = inputTags.toLowerCase().split(',').map(tag => tag.trim());
-    const newSuggestions = [];
-
-    // 检查缺失的常用标签
-    Object.entries(commonTags).forEach(([category, tags]) => {
-      const missingTags = tags.filter(tag => 
-        !currentTags.some(currentTag => currentTag.includes(tag.toLowerCase()))
-      );
-      if (missingTags.length > 0) {
-        newSuggestions.push({
-          category,
-          tags: missingTags.slice(0, 3)
-        });
+  // 收藏提示词
+  const toggleFavorite = (prompt) => {
+    setFavoritePrompts(prev => {
+      const exists = prev.find(fav => fav.id === prompt.id);
+      if (exists) {
+        return prev.filter(fav => fav.id !== prompt.id);
+      } else {
+        return [...prev, prompt];
       }
     });
-
-    setSuggestions(newSuggestions);
   };
 
-  const addTag = (tag) => {
-    const newTags = inputTags ? `${inputTags}, ${tag}` : tag;
-    setInputTags(newTags);
+  // 导出收藏的提示词
+  const exportFavorites = () => {
+    if (favoritePrompts.length === 0) {
+      alert('暂无收藏的提示词');
+      return;
+    }
+
+    const exportData = {
+      title: 'I-Prompt 收藏的灵感提示词',
+      exportTime: new Date().toISOString(),
+      prompts: favoritePrompts
+    };
+
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `inspiration-prompts-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3 mb-4">
-        <Tag className="text-green-600" size={24} />
-        <h2 className="text-xl font-bold text-gray-900">标签补全工具</h2>
-      </div>
+      {/* 控制面板 */}
+      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* 灵感模式选择 */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <Sparkles className="text-orange-600 mr-2" size={20} />
+              灵感模式
+            </h3>
+            <div className="grid grid-cols-1 gap-3">
+              {inspirationModes.map(mode => {
+                const IconComponent = mode.icon;
+                return (
+                  <button
+                    key={mode.id}
+                    onClick={() => setSelectedStyle(mode.id)}
+                    className={`p-4 rounded-lg border transition-all text-left ${
+                      selectedStyle === mode.id
+                        ? `${mode.color} text-white border-transparent shadow-md`
+                        : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <IconComponent size={20} />
+                      <div>
+                        <h4 className="font-medium">{mode.name}</h4>
+                        <p className={`text-sm ${selectedStyle === mode.id ? 'text-white/80' : 'text-gray-500'}`}>
+                          {mode.description}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">当前标签</label>
-          <textarea
-            value={inputTags}
-            onChange={(e) => setInputTags(e.target.value)}
-            placeholder="输入已有的标签，用逗号分隔..."
-            className="w-full h-24 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
-          />
+          {/* 复杂度设置 */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <Star className="text-orange-600 mr-2" size={20} />
+              复杂度设置
+            </h3>
+            <div className="space-y-3">
+              {complexityLevels.map(level => (
+                <button
+                  key={level.id}
+                  onClick={() => setSelectedComplexity(level.id)}
+                  className={`w-full p-4 rounded-lg border transition-all text-left ${
+                    selectedComplexity === level.id
+                      ? 'bg-orange-600 text-white border-orange-600 shadow-md'
+                      : 'bg-white hover:bg-orange-50 text-gray-700 border-gray-200 hover:border-orange-300'
+                  }`}
+                >
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h4 className="font-medium">{level.name}</h4>
+                      <p className={`text-sm ${selectedComplexity === level.id ? 'text-white/80' : 'text-gray-500'}`}>
+                        {level.description}
+                      </p>
+                    </div>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      selectedComplexity === level.id ? 'bg-white/20' : 'bg-gray-100'
+                    }`}>
+                      {level.tagCount}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <button
-          onClick={generateSuggestions}
-          disabled={!inputTags.trim()}
-          className="w-full bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          生成标签建议
-        </button>
+        {/* 生成按钮 */}
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-600">
+              模式: <span className="font-medium text-orange-600">
+                {inspirationModes.find(m => m.id === selectedStyle)?.name}
+              </span>
+              {' | '}
+              复杂度: <span className="font-medium text-orange-600">
+                {complexityLevels.find(l => l.id === selectedComplexity)?.name}
+              </span>
+            </div>
+            <div className="flex gap-3">
+              {favoritePrompts.length > 0 && (
+                <button
+                  onClick={exportFavorites}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  <Download size={16} />
+                  导出收藏 ({favoritePrompts.length})
+                </button>
+              )}
+              <button
+                onClick={generateInspiration}
+                disabled={isGenerating || !tagDatabase}
+                className="flex items-center gap-2 px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isGenerating ? (
+                  <RefreshCw size={16} className="animate-spin" />
+                ) : (
+                  <Lightbulb size={16} />
+                )}
+                {isGenerating ? '生成中...' : '生成灵感'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        {suggestions.length > 0 && (
-          <div className="space-y-4">
-            <h3 className="font-medium text-gray-900">建议添加的标签</h3>
-            {suggestions.map((suggestion, index) => (
-              <div key={index} className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <h4 className="font-medium text-green-900 mb-2 capitalize">{suggestion.category}</h4>
-                <div className="flex flex-wrap gap-2">
-                  {suggestion.tags.map((tag, tagIndex) => (
+      {/* 加载状态 */}
+      {isGenerating && (
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">正在生成创意灵感...</h3>
+            <p className="text-gray-600">基于标签库智能分析中，请稍候</p>
+          </div>
+        </div>
+      )}
+
+      {/* 生成结果 */}
+      {generatedPrompts.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">生成的创意灵感</h3>
+            <span className="text-sm text-gray-500">{generatedPrompts.length} 个提示词</span>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {generatedPrompts.map((prompt, index) => {
+              const isFavorited = favoritePrompts.some(fav => fav.id === prompt.id);
+              return (
+                <div key={prompt.id} className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-shadow">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center justify-center w-6 h-6 bg-orange-100 text-orange-600 rounded-full text-sm font-medium">
+                        {index + 1}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {inspirationModes.find(m => m.id === prompt.mode)?.name} · {prompt.timestamp}
+                      </span>
+                    </div>
                     <button
-                      key={tagIndex}
-                      onClick={() => addTag(tag)}
-                      className="px-3 py-1 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition-colors text-sm"
+                      onClick={() => toggleFavorite(prompt)}
+                      className={`p-1 rounded transition-colors ${
+                        isFavorited 
+                          ? 'text-red-500 hover:text-red-600' 
+                          : 'text-gray-400 hover:text-red-500'
+                      }`}
                     >
-                      <Plus size={12} className="inline mr-1" />
-                      {tag}
+                      <Heart size={16} className={isFavorited ? 'fill-current' : ''} />
                     </button>
-                  ))}
+                  </div>
+                  
+                  <div className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg p-4 mb-4">
+                    <p className="text-sm text-gray-700 font-mono leading-relaxed">
+                      {prompt.text}
+                    </p>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <div className="text-xs text-gray-500">
+                      {prompt.text.split(', ').length} 个标签 · 
+                      {complexityLevels.find(l => l.id === prompt.complexity)?.name}复杂度
+                    </div>
+                    <button
+                      onClick={() => onCopy(prompt.text)}
+                      className="flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition-colors text-sm"
+                    >
+                      {copyStatus === 'copied' ? <CheckCircle size={14} /> : <Copy size={14} />}
+                      复制
+                    </button>
+                  </div>
                 </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* 收藏的提示词 */}
+      {favoritePrompts.length > 0 && (
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+              <Heart className="text-red-500 mr-2" size={20} />
+              收藏的灵感 ({favoritePrompts.length})
+            </h3>
+            <button
+              onClick={() => setFavoritePrompts([])}
+              className="text-sm text-gray-500 hover:text-red-500 transition-colors"
+            >
+              清空收藏
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+            {favoritePrompts.map((prompt, index) => (
+              <div key={prompt.id} className="bg-gradient-to-r from-red-50 to-pink-50 rounded-lg p-4 border border-red-100">
+                <div className="flex items-start justify-between mb-2">
+                  <span className="text-xs text-red-600 font-medium">
+                    {inspirationModes.find(m => m.id === prompt.mode)?.name}
+                  </span>
+                  <button
+                    onClick={() => toggleFavorite(prompt)}
+                    className="text-red-500 hover:text-red-600 transition-colors"
+                  >
+                    <Heart size={14} className="fill-current" />
+                  </button>
+                </div>
+                <p className="text-sm text-gray-700 font-mono mb-3 leading-relaxed">
+                  {prompt.text}
+                </p>
+                <button
+                  onClick={() => onCopy(prompt.text)}
+                  className="flex items-center gap-1 px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200 transition-colors text-xs"
+                >
+                  <Copy size={12} />
+                  复制
+                </button>
               </div>
             ))}
           </div>
-        )}
+        </div>
+      )}
 
-        {inputTags && (
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="font-medium text-gray-900">完整标签列表</h3>
-              <button
-                onClick={() => onCopy(inputTags)}
-                className="p-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                {copyStatus === 'copied' ? <CheckCircle size={16} /> : <Copy size={16} />}
-              </button>
-            </div>
-            <p className="text-sm font-mono text-gray-700">{inputTags}</p>
+      {/* 使用说明 */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 p-6">
+        <h3 className="text-lg font-semibold text-blue-900 mb-4">使用说明</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-blue-800">
+          <div>
+            <h4 className="font-medium mb-2">灵感模式</h4>
+            <ul className="space-y-1">
+              <li>• <strong>随机灵感</strong>：从各分类随机组合标签</li>
+              <li>• <strong>人物创作</strong>：专注角色设计和外观</li>
+              <li>• <strong>场景构建</strong>：创建环境和背景</li>
+              <li>• <strong>风格探索</strong>：尝试不同艺术风格</li>
+              <li>• <strong>奇幻世界</strong>：魔法与奇幻元素</li>
+            </ul>
           </div>
-        )}
+          <div>
+            <h4 className="font-medium mb-2">功能特点</h4>
+            <ul className="space-y-1">
+              <li>• 基于完整标签库数据生成</li>
+              <li>• 智能分析标签频率和搭配</li>
+              <li>• 支持收藏和导出功能</li>
+              <li>• 可调节复杂度和标签数量</li>
+              <li>• 一键复制到剪贴板</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   );

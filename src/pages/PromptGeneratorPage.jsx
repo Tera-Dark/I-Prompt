@@ -3,6 +3,7 @@ import { Brain, Copy, CheckCircle, Loader2, Sparkles, AlertCircle, Heart } from 
 import { usePromptGenerator } from '../hooks/usePromptGenerator';
 import { QUICK_TAGS, PAINTING_STYLES } from '../constants/data';
 import { APP_CONFIG } from '../constants/config';
+import { useNotify } from '../components/common/NotificationSystem';
 
 const PromptGeneratorPage = () => {
   const {
@@ -21,19 +22,25 @@ const PromptGeneratorPage = () => {
   } = usePromptGenerator();
 
   const [showQuickTags, setShowQuickTags] = useState(false);
-  const [copyStatus, setCopyStatus] = useState('');
+  const { notifySuccess, notifyError } = useNotify();
 
   const handleCopy = async (text) => {
     const success = await copyPrompt(text);
-    setCopyStatus(success ? 'copied' : 'error');
-    setTimeout(() => setCopyStatus(''), 2000);
+    if (success) {
+      notifySuccess('copy', '提示词');
+    } else {
+      notifyError('copy', '复制失败');
+    }
   };
 
   const handleGenerate = async () => {
     const success = await generatePrompt();
-    if (!success && validationErrors.length > 0) {
-      // 验证失败的处理
-      console.log('Validation failed:', validationErrors);
+    if (success) {
+      notifySuccess('create', '提示词生成');
+    } else if (validationErrors.length > 0) {
+      notifyError('validation', '输入验证失败');
+    } else {
+      notifyError('create', '生成失败，请稍后重试');
     }
   };
 
@@ -220,13 +227,7 @@ const PromptGeneratorPage = () => {
                   className="p-2 hover:bg-green-100 rounded-lg transition-colors group"
                   title="复制到剪贴板"
                 >
-                  {copyStatus === 'copied' ? (
-                    <CheckCircle size={16} className="text-green-600" />
-                  ) : copyStatus === 'error' ? (
-                    <AlertCircle size={16} className="text-red-600" />
-                  ) : (
-                    <Copy size={16} className="text-gray-600 group-hover:text-green-600" />
-                  )}
+                  <Copy size={16} className="text-gray-600 group-hover:text-green-600" />
                 </button>
                 <button 
                   onClick={handleGenerate}
@@ -303,15 +304,6 @@ const PromptGeneratorPage = () => {
           </div>
         </div>
       </div>
-
-      {/* 复制状态提示 */}
-      {copyStatus && (
-        <div className={`fixed bottom-4 right-4 px-4 py-2 rounded-lg text-white text-sm transition-all duration-300 shadow-lg ${
-          copyStatus === 'copied' ? 'bg-green-600' : 'bg-red-600'
-        }`}>
-          {copyStatus === 'copied' ? '✅ 已复制到剪贴板' : '❌ 复制失败'}
-        </div>
-      )}
     </div>
   );
 };

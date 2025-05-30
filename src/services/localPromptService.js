@@ -1,15 +1,32 @@
 import { PAINTING_STYLES } from '../constants/data';
+import { findChineseTranslation, findEnglishTranslation } from './tagDatabaseService';
 
 /**
  * 本地提示词增强服务 - AI服务的降级备份
  */
 class LocalPromptService {
   constructor() {
+    this.basePrompts = {
+      portrait: '肖像, 人像摄影',
+      landscape: '风景, 自然景观',
+      anime: '动漫风格, 二次元',
+      realistic: '写实风格, 逼真',
+      fantasy: '奇幻, 魔幻世界',
+      scifi: '科幻, 未来主义',
+      abstract: '抽象艺术, 概念性',
+      minimalist: '极简主义, 简约风格'
+    };
+
     this.qualityTags = [
-      "masterpiece, best quality, ultra detailed, extremely detailed",
-      "8k wallpaper, highly detailed, professional quality",
-      "absurdres, incredible detail, finely detailed",
-      "amazing quality, ultra high res, detailed background"
+      'masterpiece', 'best quality', 'ultra detailed',
+      'highly detailed', 'sharp focus', 'professional',
+      'cinematic lighting', 'perfect composition'
+    ];
+
+    this.negativeTags = [
+      'low quality', 'blurry', 'bad anatomy',
+      'extra fingers', 'bad hands', 'deformed',
+      'ugly', 'duplicate', 'mutated'
     ];
 
     this.lightingEffects = [
@@ -96,35 +113,29 @@ class LocalPromptService {
    * 翻译常见中文词汇
    */
   translateCommonWords(text) {
-    const translations = {
-      '女孩': 'girl',
-      '男孩': 'boy', 
-      '美女': 'beautiful woman',
-      '帅哥': 'handsome man',
-      '猫': 'cat',
-      '狗': 'dog',
-      '花': 'flower',
-      '树': 'tree',
-      '房子': 'house',
-      '汽车': 'car',
-      '天空': 'sky',
-      '海洋': 'ocean',
-      '森林': 'forest',
-      '城市': 'city',
-      '夜晚': 'night',
-      '白天': 'day',
-      '阳光': 'sunlight',
-      '月亮': 'moon',
-      '星星': 'stars'
-    };
-
+    // 使用标签数据库进行翻译
     let translatedText = text;
-    Object.entries(translations).forEach(([chinese, english]) => {
-      const regex = new RegExp(chinese, 'g');
-      translatedText = translatedText.replace(regex, english);
-    });
-
-    return translatedText;
+    
+    try {
+      // 将文本按词汇分割，尝试翻译每个词汇
+      const words = text.split(/[\s,，、。！？；：""''（）【】]+/);
+      
+      words.forEach(word => {
+        if (word.trim()) {
+          // 使用标签数据库查找对应的英文翻译
+          const englishTranslation = findEnglishTranslation(word.trim());
+          if (englishTranslation) {
+            const regex = new RegExp(word, 'g');
+            translatedText = translatedText.replace(regex, englishTranslation);
+          }
+        }
+      });
+      
+      return translatedText;
+    } catch (error) {
+      console.error('词汇翻译失败:', error);
+      return text; // 翻译失败时返回原文
+    }
   }
 }
 
