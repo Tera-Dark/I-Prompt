@@ -721,7 +721,7 @@ Made with ❤️ by I-Prompt Team
 ## 🚀 部署方式
 
 ### GitHub Pages (前端)
-前端自动部署到GitHub Pages: https://wjx19.github.io/I-Prompt
+前端自动部署到GitHub Pages: https://YourUsername.github.io/I-Prompt
 
 ### Vercel (Python后端)
 Python后端部署到Vercel，为图像反推功能提供API支持。
