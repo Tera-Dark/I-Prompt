@@ -29,11 +29,11 @@ const AssistantToolsPage = () => {
               <h1 className="text-2xl font-bold text-gray-900 mb-2 flex items-center">
                 <Lightbulb className="text-orange-600 mr-2" size={28} />
                 灵感生成器
-              </h1>
+        </h1>
               <p className="text-gray-600 text-sm">
                 基于标签库的智能创意灵感生成，为您的AI绘画提供无限创意灵感
-              </p>
-            </div>
+        </p>
+      </div>
             <div className="flex items-center gap-2">
               <div className="text-right">
                 <div className="text-xs text-gray-500">智能模式</div>
@@ -289,7 +289,7 @@ const InspirationTool = ({ onCopy, copyStatus, tagDatabase }) => {
       }
 
       setGeneratedPrompts(prompts);
-      setIsGenerating(false);
+    setIsGenerating(false);
     }, 1500);
   };
 
@@ -346,7 +346,7 @@ const InspirationTool = ({ onCopy, copyStatus, tagDatabase }) => {
               {inspirationModes.map(mode => {
                 const IconComponent = mode.icon;
                 return (
-                  <button
+          <button
                     key={mode.id}
                     onClick={() => setSelectedStyle(mode.id)}
                     className={`p-4 rounded-lg border transition-all text-left ${
@@ -364,10 +364,10 @@ const InspirationTool = ({ onCopy, copyStatus, tagDatabase }) => {
                         </p>
                       </div>
                     </div>
-                  </button>
+          </button>
                 );
               })}
-            </div>
+        </div>
           </div>
 
           {/* 复杂度设置 */}
@@ -428,7 +428,7 @@ const InspirationTool = ({ onCopy, copyStatus, tagDatabase }) => {
                   导出收藏 ({favoritePrompts.length})
                 </button>
               )}
-              <button
+        <button
                 onClick={generateInspiration}
                 disabled={isGenerating || !tagDatabase}
                 className="flex items-center gap-2 px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -439,9 +439,9 @@ const InspirationTool = ({ onCopy, copyStatus, tagDatabase }) => {
                   <Lightbulb size={16} />
                 )}
                 {isGenerating ? '生成中...' : '生成灵感'}
-              </button>
-            </div>
-          </div>
+        </button>
+      </div>
+    </div>
         </div>
       </div>
 
@@ -462,8 +462,8 @@ const InspirationTool = ({ onCopy, copyStatus, tagDatabase }) => {
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900">生成的创意灵感</h3>
             <span className="text-sm text-gray-500">{generatedPrompts.length} 个提示词</span>
-          </div>
-          
+        </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {generatedPrompts.map((prompt, index) => {
               const isFavorited = favoritePrompts.some(fav => fav.id === prompt.id);
@@ -478,7 +478,7 @@ const InspirationTool = ({ onCopy, copyStatus, tagDatabase }) => {
                         {inspirationModes.find(m => m.id === prompt.mode)?.name} · {prompt.timestamp}
                       </span>
                     </div>
-                    <button
+        <button
                       onClick={() => toggleFavorite(prompt)}
                       className={`p-1 rounded transition-colors ${
                         isFavorited 
@@ -487,7 +487,7 @@ const InspirationTool = ({ onCopy, copyStatus, tagDatabase }) => {
                       }`}
                     >
                       <Heart size={16} className={isFavorited ? 'fill-current' : ''} />
-                    </button>
+        </button>
                   </div>
                   
                   <div className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg p-4 mb-4">
@@ -559,8 +559,8 @@ const InspirationTool = ({ onCopy, copyStatus, tagDatabase }) => {
               </div>
             ))}
           </div>
-        </div>
-      )}
+          </div>
+        )}
 
       {/* 使用说明 */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200 p-6">
@@ -575,7 +575,7 @@ const InspirationTool = ({ onCopy, copyStatus, tagDatabase }) => {
               <li>• <strong>风格探索</strong>：尝试不同艺术风格</li>
               <li>• <strong>奇幻世界</strong>：魔法与奇幻元素</li>
             </ul>
-          </div>
+            </div>
           <div>
             <h4 className="font-medium mb-2">功能特点</h4>
             <ul className="space-y-1">
