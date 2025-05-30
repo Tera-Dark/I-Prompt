@@ -1,5 +1,7 @@
 import React from 'react';
-import { Settings, Database, Download, Upload, Plus, Edit, Trash2, RefreshCw, Package } from 'lucide-react';
+import { 
+  RefreshCw, Settings, Package, Plus, Edit
+} from 'lucide-react';
 
 /**
  * 标签管理工具栏组件 - 提供标签库管理功能

@@ -1,13 +1,10 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { 
-  Plus, Search, Copy, Heart, X, Languages, 
-  ChevronDown, ChevronRight, ChevronLeft, Tag as TagIcon,
-  Sparkles, TrendingUp, Edit3,
-  Trash2, 
-  EyeOff, Eye, Settings, TestTube, CheckCircle, XCircle, RefreshCw,
-  Globe, ArrowRightLeft, Download, Upload, Edit, Save, Database, 
-  Shield, AlertTriangle, FileText, Lock, HelpCircle, BookOpen, Folder, Info,
-  Calendar, BarChart3, RotateCcw, Palette
+  Search, Copy, X, Languages, 
+  Sparkles, Settings, RefreshCw,
+  Globe, ArrowRightLeft, Database, BookOpen, Edit3, Tag as TagIcon
 } from 'lucide-react';
 import { copyToClipboard } from '../utils/clipboard';
 import { 
@@ -20,7 +17,6 @@ import {
 import { 
   getTagDatabase,
   searchTags,
-  getPopularTags,
   tagDatabaseService
 } from '../services/tagDatabaseService';
 
@@ -70,7 +66,6 @@ const PromptLibraryPage = () => {
   
   // 库模式切换状态
   const [libraryMode, setLibraryMode] = useState('default'); // 'default' | 'custom'
-  const [isLibrarySwitching, setIsLibrarySwitching] = useState(false);
   const [customLibrary, setCustomLibrary] = useState({
     categories: {
       'favorites': {
@@ -107,7 +102,6 @@ const PromptLibraryPage = () => {
   // 标签库管理状态
   const [showTagManager, setShowTagManager] = useState(false);
   const [showImportExport, setShowImportExport] = useState(false);
-  const [managementMode, setManagementMode] = useState('view');
   const [editingTag, setEditingTag] = useState(null);
   const [newTagData, setNewTagData] = useState({ en: '', cn: '', frequency: 50 });
   const [importExportData, setImportExportData] = useState('');
@@ -127,9 +121,7 @@ const PromptLibraryPage = () => {
   }, [selectedTags, disabledTags]);
 
   // 状态保护变量
-  const [isUpdatingPrompt, setIsUpdatingPrompt] = useState(false);
   const [updateSource, setUpdateSource] = useState(null);
-  const [isAddingTag, setIsAddingTag] = useState(false);
 
   // 翻译状态管理
   const [translationState, setTranslationState] = useState({
@@ -569,7 +561,6 @@ const PromptLibraryPage = () => {
   const addTag = useCallback((tagToAdd, fromDatabase = false) => {
     console.log('🏷️ [addTag] 添加标签:', tagToAdd, '来源:', fromDatabase ? '数据库' : '手动');
     
-    setIsAddingTag(true);
     setUpdateSource('add-tag'); // 设置更新源为添加标签
     
     let tagText = ''; // 在try块外部定义，确保catch块可以访问
@@ -602,7 +593,7 @@ const PromptLibraryPage = () => {
         console.log('📝 [addTag] 更新标签列表:', newTags);
         
         // 同步更新英文输出栏
-        const enabledTags = newTags.filter((_, index) => !disabledTagsRef.current.has(index));
+        const enabledTags = newTags.filter((_, index) => !disabledTags.has(index));
         setEnglishPrompt(enabledTags.join(', '));
         
         return newTags;
@@ -616,7 +607,6 @@ const PromptLibraryPage = () => {
       console.error('❌ [addTag] 添加标签失败:', error);
       notifyError('add', error.message, tagText || String(tagToAdd));
     } finally {
-      setIsAddingTag(false);
       
       // 清除更新源标记
       setTimeout(() => setUpdateSource(null), 100);

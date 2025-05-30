@@ -320,7 +320,6 @@ export function getAvailableEngines() {
  */
 export async function testEngine(engineKey) {
   const testText = '你好';
-  const expectedResult = 'hello';
   
   try {
     let result;
@@ -411,19 +410,13 @@ export function getPreferredEngineOrder() {
   return PREFERRED_ENGINE_ORDER;
 }
 
-// 默认导出
-export default {
-  smartTranslate,
+// 导出翻译服务的主要接口
+const translationService = {
   translateTag,
   translatePrompt,
-  batchTranslate,
   detectLanguage,
-  testEngine,
   getAvailableEngines,
-  checkTranslationService,
-  getDefaultEngine,
-  getPreferredEngineOrder,
-  TRANSLATION_ENGINES,
-  DEFAULT_TRANSLATION_ENGINE,
-  PREFERRED_ENGINE_ORDER
-}; 
+  testEngine
+};
+
+export default translationService; 

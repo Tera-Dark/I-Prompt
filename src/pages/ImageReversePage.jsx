@@ -1,14 +1,13 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { 
-  Upload, Image as ImageIcon, Sparkles, Download, Copy, 
-  RefreshCw, CheckCircle, XCircle, Eye, EyeOff, 
-  Filter, BarChart3, Tag, Zap, Camera, Brain,
-  AlertCircle, Info, Settings, Star, ChevronDown
+  Upload, Sparkles, Download, Copy, 
+  RefreshCw, CheckCircle, Eye, EyeOff, 
+  BarChart3, Tag, Zap, Camera, Brain,
+  AlertCircle, Info, Settings, ChevronDown
 } from 'lucide-react';
 import { 
   analyzeImageTags, 
   validateImageFile, 
-  tagsToPrompt, 
   getRecommendedTags,
   getAvailableModels 
 } from '../services/imageTaggingService';

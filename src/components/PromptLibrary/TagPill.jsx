@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   X, Eye, EyeOff, Copy, Heart, Languages, 
-  Plus, Minus, RotateCcw, Weight, Square, Circle, Hexagon
+  Plus, Minus, RotateCcw
 } from 'lucide-react';
 
 // 导入通知系统
-import { useNotify } from '../common/NotificationSystem';
-import { copyToClipboard } from '../../utils/clipboard';
+// import { useNotify } from '../common/NotificationSystem';
 import { translateTag } from '../../services/translationService';
 
 /**
@@ -32,8 +31,8 @@ const TagPill = ({
   setHoveredTag,
   targetLanguage
 }) => {
-  // 使用通知系统
-  const { notifySuccess, notifyError } = useNotify();
+  // 使用通知系统 - 暂时注释未使用的变量
+  // const { notifySuccess, notifyError } = useNotify();
   
   const [chineseTranslation, setChineseTranslation] = useState('');
   const [isLoadingTranslation, setIsLoadingTranslation] = useState(false);
@@ -247,7 +246,7 @@ const TagPill = ({
     if (text) {
       loadTranslation();
     }
-  }, [text, translatedTags]);
+  }, [text, translatedTags, onTranslationUpdate, tag]);
 
   // 获取权重颜色
   const getWeightColor = useCallback(() => {
@@ -324,6 +323,9 @@ const TagPill = ({
           // 使用特殊的delta值999表示类型切换
           onAdjustBrackets(index, targetType, 999);
         }
+        break;
+      default:
+        console.warn(`⚠️ [TagPill] 未知的操作: "${operation}"`);
         break;
     }
     

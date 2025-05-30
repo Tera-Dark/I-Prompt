@@ -78,9 +78,10 @@ const fileToBase64 = (file) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
-      // 确保返回正确的base64格式
+      // 获取base64数据，去掉data URL前缀
       const result = reader.result;
-      resolve(result);
+      const base64Data = result.split(',')[1]; // 只取base64部分，去掉 "data:image/xxx;base64," 前缀
+      resolve(base64Data);
     };
     reader.onerror = reject;
     reader.readAsDataURL(file);
@@ -121,85 +122,232 @@ const compressImage = (file, maxWidth = 1024, quality = 0.9) => {
 
 /**
  * 调用wd-tagger API进行图像标签识别
- * 使用最新的Hugging Face Spaces API格式
+ * 使用最新的Gradio API格式
  */
 const callWdTaggerAPI = async (imageData, model, generalThreshold, characterThreshold) => {
   console.log('🌐 开始调用wd-tagger API...');
   
-  // 多种API调用方式
-  const apiEndpoints = [
-    `${WD_TAGGER_CONFIG.baseUrl}/run/predict`,
-    `${WD_TAGGER_CONFIG.baseUrl}/api/predict`,
-    `${WD_TAGGER_CONFIG.baseUrl}/call/predict`
-  ];
+  // 使用标准的Gradio API格式
+  const baseUrl = 'https://smilingwolf-wd-tagger.hf.space';
   
-  let lastError = null;
+  try {
+    // 步骤1: POST请求提交数据并获取event_id
+    console.log('📤 第一步：提交预测请求...');
+    
+    const payload = {
+      data: [
+        `data:image/png;base64,${imageData}`, // 正确的data URL格式
+        model,
+        generalThreshold,
+        characterThreshold,
+        false, // exclude_tag
+        false  // character_threshold_overwrite
+      ]
+    };
+
+    const submitResponse = await fetch(`${baseUrl}/call/predict`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Origin': 'https://smilingwolf-wd-tagger.hf.space',
+        'Referer': 'https://smilingwolf-wd-tagger.hf.space/'
+      },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(30000) // 30秒超时
+    });
+
+    if (!submitResponse.ok) {
+      const errorText = await submitResponse.text();
+      throw new Error(`提交失败 HTTP ${submitResponse.status}: ${errorText}`);
+    }
+
+    const submitResult = await submitResponse.json();
+    console.log('✅ 提交成功，获得事件ID:', submitResult);
+
+    const eventId = submitResult.event_id;
+    if (!eventId) {
+      throw new Error('未获取到事件ID');
+    }
+
+    // 步骤2: GET请求轮询结果
+    console.log(`🔄 第二步：轮询结果，事件ID: ${eventId}`);
+    
+    const pollUrl = `${baseUrl}/call/predict/${eventId}`;
+    console.log(`📡 轮询URL: ${pollUrl}`);
+    
+    // 使用Server-Sent Events (SSE) 方式获取结果
+    return await pollWithSSE(pollUrl);
+    
+  } catch (error) {
+    console.error('❌ wd-tagger API调用失败:', error);
+    throw new Error(
+      '❌ wd-tagger服务调用失败\n\n' +
+      '可能的原因：\n' +
+      '• Hugging Face Spaces正在冷启动（首次使用需1-2分钟）\n' +
+      '• 服务暂时维护中或API格式已更新\n' +
+      '• 网络连接问题或防火墙阻拦\n' +
+      '• 图像格式不支持或文件过大\n\n' +
+      '建议解决方案：\n' +
+      '• 等待1-2分钟后重试\n' +
+      '• 刷新页面重新尝试\n' +
+      '• 尝试更小的图像文件\n' +
+      '• 检查网络连接\n\n' +
+      `详细错误信息: ${error.message}`
+    );
+  }
+};
+
+/**
+ * 使用Server-Sent Events轮询获取结果
+ */
+const pollWithSSE = async (pollUrl) => {
+  return new Promise((resolve, reject) => {
+    console.log('📡 开始SSE轮询...');
+    
+    // 模拟EventSource的fetch请求
+    let controller = new AbortController();
+    let timeoutId = setTimeout(() => {
+      controller.abort();
+      reject(new Error('轮询超时（2分钟）'));
+    }, 120000); // 2分钟超时
+    
+    fetch(pollUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      },
+      signal: controller.signal
+    })
+    .then(async response => {
+      if (!response.ok) {
+        throw new Error(`轮询请求失败: ${response.status} ${response.statusText}`);
+      }
+      
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          
+          if (done) {
+            console.log('📥 SSE流结束');
+            break;
+          }
+          
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || ''; // 保留最后一个可能不完整的行
+          
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = line.slice(6); // 移除 'data: ' 前缀
+                if (data.trim() === '') continue;
+                
+                const eventData = JSON.parse(data);
+                console.log('📨 SSE数据:', eventData);
+                
+                // 检查是否是完成事件
+                if (Array.isArray(eventData) && eventData.length > 0) {
+                  console.log('✅ 获取到最终结果！');
+                  clearTimeout(timeoutId);
+                  resolve({ data: eventData });
+                  return;
+                }
+              } catch (parseError) {
+                console.log('⚠️ 解析SSE数据失败:', parseError.message, '原始数据:', line);
+              }
+            } else if (line.startsWith('event: ')) {
+              const eventType = line.slice(7);
+              console.log('📢 SSE事件类型:', eventType);
+              
+              if (eventType === 'error') {
+                clearTimeout(timeoutId);
+                reject(new Error('SSE事件错误'));
+                return;
+              } else if (eventType === 'complete') {
+                console.log('🎉 任务完成标志');
+              }
+            }
+          }
+        }
+      } finally {
+        reader.releaseLock();
+      }
+      
+      // 如果没有通过SSE获取到结果，尝试直接JSON响应
+      console.log('⚠️ SSE未获取到结果，尝试直接JSON响应...');
+      reject(new Error('未能通过SSE获取到结果'));
+      
+    })
+    .catch(error => {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        reject(new Error('轮询超时'));
+      } else {
+        console.log('❌ SSE轮询失败，尝试备用方法:', error.message);
+        // 备用方法：直接JSON轮询
+        fallbackJsonPolling(pollUrl)
+          .then(resolve)
+          .catch(reject);
+      }
+    });
+  });
+};
+
+/**
+ * 备用轮询方法：直接JSON请求
+ */
+const fallbackJsonPolling = async (pollUrl) => {
+  console.log('🔄 使用备用JSON轮询方法...');
   
-  for (const apiUrl of apiEndpoints) {
+  for (let attempt = 0; attempt < 60; attempt++) {
     try {
-      console.log(`📤 尝试API端点: ${apiUrl}`);
+      console.log(`🔍 轮询尝试 ${attempt + 1}/60...`);
       
-      // 构建请求负载
-      const payload = {
-        data: [
-          imageData,           // 图像数据 (base64，不需要data:前缀)
-          model,              // 模型选择
-          generalThreshold,   // General tags阈值
-          characterThreshold, // Character tags阈值
-          false,              // 使用标准阈值
-          false               // 不使用MCut阈值
-        ]
-      };
-      
-      console.log('📦 发送API请求...');
-      const response = await fetch(apiUrl, {
-        method: 'POST',
+      const response = await fetch(pollUrl, {
+        method: 'GET',
         headers: {
-          'Content-Type': 'application/json',
           'Accept': 'application/json',
-        },
-        body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(WD_TAGGER_CONFIG.timeout)
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
       });
 
-      console.log(`📥 API响应状态: ${response.status}`);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.log(`❌ API响应错误: ${response.status} ${errorText}`);
+      if (response.ok) {
+        const result = await response.json();
+        console.log(`📥 轮询结果 (尝试 ${attempt + 1}):`, result);
         
-        // 如果是404，尝试下一个端点
-        if (response.status === 404) {
-          lastError = new Error(`端点不可用: ${response.status}`);
-          continue;
+        // 检查各种可能的完成格式
+        if (result && Array.isArray(result.data) && result.data.length > 0) {
+          console.log('✅ JSON轮询成功！');
+          return result;
+        } else if (Array.isArray(result) && result.length > 0) {
+          console.log('✅ JSON轮询成功（直接数组格式）！');
+          return { data: result };
         }
         
-        throw new Error(`API请求失败: ${response.status} - ${errorText}`);
+        // 继续等待
+        console.log('⏳ 任务还在处理中，继续等待...');
+      } else {
+        console.log(`❌ 轮询请求失败，状态码: ${response.status}`);
       }
-
-      const result = await response.json();
-      console.log('✅ API调用成功，解析结果...');
-      return result;
-
-    } catch (error) {
-      console.log(`❌ API端点 ${apiUrl} 调用失败: ${error.message}`);
-      lastError = error;
-      
-      // 如果不是404错误，不需要尝试其他端点
-      if (!error.message.includes('404') && !error.message.includes('端点不可用')) {
-        break;
-      }
+    } catch (pollError) {
+      console.log(`⚠️ 轮询尝试 ${attempt + 1} 失败: ${pollError.message}`);
+    }
+    
+    // 等待2秒后继续下一次轮询
+    if (attempt < 59) {
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
   }
   
-  // 所有端点都失败，提供用户友好的错误信息
-  throw new Error(
-    'wd-tagger服务暂时不可用。可能的原因：\n' +
-    '• Hugging Face Spaces需要启动时间（首次使用需1-2分钟）\n' +
-    '• 服务正在更新或维护中\n' +
-    '• 网络连接问题\n\n' +
-    '建议：请稍后重试，或尝试刷新页面后再试'
-  );
+  throw new Error('备用轮询超时，未能获取任务结果');
 };
 
 /**
@@ -224,12 +372,14 @@ const parseWdTaggerResult = (apiResult) => {
       throw new Error('API返回格式不受支持');
     }
     
+    console.log('📋 解析数组数据:', data);
     const [stringOutput, ratingOutput, characterOutput, tagsOutput] = data;
     
     const tags = [];
     
     // 解析tags输出 (通常是一个包含标签和置信度的对象)
     if (tagsOutput && typeof tagsOutput === 'object') {
+      console.log('🏷️ 解析标签输出:', tagsOutput);
       Object.entries(tagsOutput).forEach(([tag, confidence]) => {
         if (typeof confidence === 'number' && confidence > 0) {
           tags.push({
@@ -243,7 +393,7 @@ const parseWdTaggerResult = (apiResult) => {
     
     // 如果tags输出为空，尝试解析字符串输出
     if (tags.length === 0 && stringOutput && typeof stringOutput === 'string') {
-      console.log('📝 从字符串输出解析标签...');
+      console.log('📝 从字符串输出解析标签:', stringOutput);
       // 解析字符串格式的标签
       const tagStrings = stringOutput.split(',').map(s => s.trim()).filter(s => s);
       tagStrings.forEach(tagStr => {
@@ -262,22 +412,32 @@ const parseWdTaggerResult = (apiResult) => {
       });
     }
     
-    // 如果仍然没有标签，尝试从其他输出解析
-    if (tags.length === 0) {
-      console.log('⚠️ 主要输出为空，尝试从其他输出解析...');
-      
-      // 尝试从character输出解析
-      if (characterOutput && typeof characterOutput === 'object') {
-        Object.entries(characterOutput).forEach(([tag, confidence]) => {
-          if (typeof confidence === 'number' && confidence > 0.5) { // 角色标签使用更高阈值
-            tags.push({
-              tag: tag.replace(/_/g, ' '),
-              confidence: confidence,
-              category: 'character'
-            });
-          }
-        });
-      }
+    // 如果仍然没有标签，尝试从角色输出解析
+    if (tags.length === 0 && characterOutput && typeof characterOutput === 'object') {
+      console.log('👤 从角色输出解析标签:', characterOutput);
+      Object.entries(characterOutput).forEach(([tag, confidence]) => {
+        if (typeof confidence === 'number' && confidence > 0.5) { // 角色标签使用更高阈值
+          tags.push({
+            tag: tag.replace(/_/g, ' '),
+            confidence: confidence,
+            category: 'character'
+          });
+        }
+      });
+    }
+    
+    // 如果还是没有标签，尝试从评级输出解析
+    if (tags.length === 0 && ratingOutput && typeof ratingOutput === 'object') {
+      console.log('⭐ 从评级输出解析标签:', ratingOutput);
+      Object.entries(ratingOutput).forEach(([tag, confidence]) => {
+        if (typeof confidence === 'number' && confidence > 0.3) {
+          tags.push({
+            tag: tag.replace(/_/g, ' '),
+            confidence: confidence,
+            category: 'style'
+          });
+        }
+      });
     }
     
     // 按置信度排序
@@ -504,9 +664,9 @@ export const analyzeImageTags = async (file, options = {}) => {
     
     // 5. 解析结果
     console.log('📊 解析和分类标签...');
-    const tags = parseWdTaggerResult(apiResult);
+    const result = parseWdTaggerResult(apiResult);
     
-    if (!tags || tags.length === 0) {
+    if (!result || !result.success || !result.tags || result.tags.length === 0) {
       return {
         success: false,
         error: '没有识别到任何标签，请尝试：\n1. 调低"通用标签阈值"到0.25\n2. 更换更清晰的图像\n3. 尝试不同的模型',
@@ -518,7 +678,7 @@ export const analyzeImageTags = async (file, options = {}) => {
     }
     
     // 6. 智能标签分类和权重计算
-    const categorizedTags = categorizeTags(tags);
+    const categorizedTags = categorizeTags(result.tags);
     const processedTags = calculateTagWeights(categorizedTags);
     
     console.log(`✅ 成功识别到 ${processedTags.length} 个标签`);
@@ -530,7 +690,8 @@ export const analyzeImageTags = async (file, options = {}) => {
       categories: getCategoryStats(processedTags),
       processingTime: Date.now(),
       modelUsed: model,
-      thresholds: { generalThreshold, characterThreshold }
+      thresholds: { generalThreshold, characterThreshold },
+      rawResult: result.rawOutput
     };
 
   } catch (error) {
@@ -658,11 +819,26 @@ export const getAvailableModels = () => {
  */
 export const imageTaggingConfig = WD_TAGGER_CONFIG;
 
-export default {
+/**
+ * 生成Gradio会话哈希（保留以防将来需要）
+ */
+const generateSessionHash = () => {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 10; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
+
+const imageTaggingService = {
   analyzeImageTags,
   validateImageFile,
   tagsToPrompt,
   getRecommendedTags,
   getAvailableModels,
-  imageTaggingConfig
-}; 
+  imageTaggingConfig,
+  generateSessionHash
+};
+
+export default imageTaggingService; 

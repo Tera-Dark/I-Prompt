@@ -1,8 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { 
-  Download, Upload, Plus, Edit, Trash2, RefreshCw, 
-  Database, FileText, AlertTriangle, CheckCircle, 
-  X, Save, FolderPlus, Package, Settings, Info
+  Database, Trash2, AlertTriangle, Settings,
+  Check, X, Loader, BookOpen, FolderOpen 
+} from 'lucide-react';
+import { 
+  Download 
 } from 'lucide-react';
 import { tagDatabaseService } from '../../services/tagDatabaseService';
 
@@ -13,7 +15,6 @@ import { tagDatabaseService } from '../../services/tagDatabaseService';
 const LibraryManager = ({ onClose, onLibraryUpdate }) => {
   const [activeTab, setActiveTab] = useState('import-export');
   const [importData, setImportData] = useState('');
-  const [exportData, setExportData] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [message, setMessage] = useState({ type: '', content: '' });
   const [statistics, setStatistics] = useState(null);
@@ -45,7 +46,7 @@ const LibraryManager = ({ onClose, onLibraryUpdate }) => {
       };
       
       const jsonString = JSON.stringify(exportData, null, 2);
-      setExportData(jsonString);
+      setImportData(jsonString);
       
       // 自动下载
       const blob = new Blob([jsonString], { type: 'application/json' });
@@ -270,8 +271,8 @@ const LibraryManager = ({ onClose, onLibraryUpdate }) => {
         {/* 标签页导航 */}
         <div className="flex border-b border-gray-200">
           {[
-            { id: 'import-export', label: '导入导出', icon: Package },
-            { id: 'statistics', label: '统计信息', icon: Info },
+            { id: 'import-export', label: '导入导出', icon: FolderOpen },
+            { id: 'statistics', label: '统计信息', icon: BookOpen },
             { id: 'maintenance', label: '库维护', icon: Settings }
           ].map(tab => (
             <button
@@ -298,7 +299,7 @@ const LibraryManager = ({ onClose, onLibraryUpdate }) => {
                 ? 'bg-green-100 text-green-700 border border-green-200' 
                 : 'bg-red-100 text-red-700 border border-red-200'
             }`}>
-              {message.type === 'success' ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
+              {message.type === 'success' ? <Check size={16} /> : <AlertTriangle size={16} />}
               {message.content}
             </div>
           )}
@@ -336,7 +337,7 @@ const LibraryManager = ({ onClose, onLibraryUpdate }) => {
               {/* 导入部分 */}
               <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
                 <h3 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
-                  <Upload size={18} />
+                  <Download size={18} />
                   导入标签库
                 </h3>
                 <div className="space-y-3">
@@ -353,14 +354,14 @@ const LibraryManager = ({ onClose, onLibraryUpdate }) => {
                       onClick={() => fileInputRef.current?.click()}
                       className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                     >
-                      <Upload size={16} />
+                      <Download size={16} />
                       选择JSON文件
                     </button>
                     <button
                       onClick={handleCreateSampleLibrary}
                       className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                     >
-                      <FileText size={16} />
+                      <BookOpen size={16} />
                       生成示例库
                     </button>
                   </div>
@@ -380,9 +381,9 @@ const LibraryManager = ({ onClose, onLibraryUpdate }) => {
                     className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isProcessing ? (
-                      <RefreshCw size={16} className="animate-spin" />
+                      <Loader size={16} className="animate-spin" />
                     ) : (
-                      <Upload size={16} />
+                      <Download size={16} />
                     )}
                     {isProcessing ? '导入中...' : '导入库数据'}
                   </button>
