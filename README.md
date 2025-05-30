@@ -717,3 +717,1218 @@ Made with ❤️ by I-Prompt Team
 **立即体验智能提示词库 3.0，让AI绘画创作更简单！**
 
 支持中文输入 → 自动翻译 → 专业输出 → 一键复制 → 开始创作 
+
+## 🚀 部署方式
+
+### GitHub Pages (前端)
+前端自动部署到GitHub Pages: https://wjx19.github.io/I-Prompt
+
+### Vercel (Python后端)
+Python后端部署到Vercel，为图像反推功能提供API支持。
+
+#### 部署步骤
+1. Fork本项目到你的GitHub账户
+2. 登录 [Vercel](https://vercel.com)
+3. 点击 "New Project" → Import Git Repository
+4. 选择你fork的I-Prompt项目
+5. 在Project Settings中：
+   - Framework Preset: 选择 "Other"
+   - Root Directory: 保持默认 (.)
+   - Build Command: 留空
+   - Output Directory: 留空
+6. 点击 "Deploy" 开始部署
+
+部署完成后，你会得到一个Vercel URL，比如：`https://i-prompt-api.vercel.app`
+
+#### 配置前端API地址
+部署完成后，需要更新前端配置：
+
+1. 编辑 `src/services/imageTaggingService.js`
+2. 将 `https://i-prompt-api.vercel.app/api` 替换为你的Vercel URL
+
+## ✨ 功能特性
+
+- 🎨 **智能提示词生成** - 基于DeepSeek AI的专业提示词生成
+- 🖼️ **图像反推分析** - 使用WD-Tagger识别图像标签
+- 🌍 **多语言翻译** - 支持中英文自动翻译
+- 📊 **数据可视化** - 直观的标签置信度展示
+- 💾 **结果导出** - 支持JSON格式导出分析结果
+- 📱 **响应式设计** - 完美适配桌面和移动设备
+
+## 🛠️ 本地开发
+
+### 前端开发
+```bash
+npm install
+npm start
+```
+
+### 后端开发 (可选)
+```bash
+pip install -r requirements.txt
+python server.py
+```
+
+## 🔧 技术栈
+
+- **前端**: React 18, Tailwind CSS, Lucide Icons
+- **后端**: Flask, Gradio Client, CORS
+- **部署**: GitHub Pages + Vercel
+- **AI服务**: SiliconFlow API, Hugging Face
+
+## 🌟 在线体验
+
+**🚀 [立即使用 - GitHub Pages](https://wjx19.github.io/I-Prompt)**
+
+## ✨ 核心功能
+
+### 🖼️ 图像信息提取器
+- **📋 多格式支持**: PNG、JPEG、WEBP等主流图像格式
+- **🔍 智能解析**: 自动识别Stable Diffusion、ComfyUI、NovelAI等生成工具
+- **🔐 NovelAI Stealth PNG**: 支持隐藏在Alpha通道的元数据提取
+- **⚡ ComfyUI增强**: 深度解析复杂工作流，支持自定义节点
+- **📊 可视化展示**: 三标签页设计 - 概览/智能分析/原始数据
+
+### 🧠 智能提示词分析器
+- **🏷️ 语义分类**: 8大分类 - 角色、风格、质量、构图、光照、色彩、情感、环境
+- **⚖️ 权重解析**: 支持6种权重格式 - `(())`, `{}`, `[]`, `tag:1.2`等
+- **📈 复杂度评估**: 多维度分析提示词质量和复杂度
+- **💡 智能建议**: 基于分析结果生成优化建议
+
+### 🌐 智能提示词库 3.0
+- **📝 可视化编辑**: 悬停编辑、权重调节、括号控制
+- **🔄 多引擎翻译**: 支持MyMemory、LibreTranslate、Google Web等免费API
+- **📚 专业标签库**: 6大分类，300+专业标签，支持中英文
+- **⭐ 智能管理**: 收藏、搜索、分类、历史记录
+
+### 🔧 技术特性
+- **🌍 纯前端部署**: 支持GitHub Pages，无需后端服务
+- **📱 响应式设计**: 完美适配桌面和移动设备
+- **⚡ 性能优化**: 组件懒加载、资源压缩、CDN加速
+- **🛡️ 错误处理**: 完善的异常处理和降级机制
+
+## 🚀 快速开始
+
+### 在线使用
+访问 [https://wjx19.github.io/I-Prompt](https://wjx19.github.io/I-Prompt) 立即开始使用
+
+### 本地开发
+
+```bash
+# 克隆项目
+git clone https://github.com/wjx19/I-Prompt.git
+cd I-Prompt
+
+# 安装依赖
+npm install
+
+# 启动开发服务器
+npm start
+
+# 在浏览器中打开 http://localhost:3000
+```
+
+### 本地构建
+
+```bash
+# 构建生产版本
+npm run build
+
+# 预览构建结果
+npm run preview
+```
+
+## 📦 技术架构
+
+### 前端技术栈
+- **⚛️ React 18**: 现代React特性，并发渲染
+- **🎨 Tailwind CSS**: 原子化CSS框架
+- **🔧 Lucide React**: 现代图标库
+- **📊 Exifr**: 高性能图像元数据解析
+- **🌐 Axios**: HTTP客户端
+
+### 翻译服务架构
+```
+前端应用
+    ↓
+免费翻译API (多引擎支持)
+    ├── MyMemory (1000次/天)
+    ├── LibreTranslate (20次/分钟)
+    ├── Google Web (非官方)
+    └── 内置词典 (降级方案)
+```
+
+### 部署架构
+```
+GitHub Repository
+    ↓
+GitHub Actions (自动化)
+    ├── 代码检查 & 测试
+    ├── 生产构建
+    ├── 性能测试 (Lighthouse)
+    └── 部署到 GitHub Pages
+```
+
+## 🔧 开发配置
+
+### 环境要求
+- **Node.js**: 18.x 或 20.x
+- **npm**: 8.x+
+- **浏览器**: 现代浏览器 (Chrome 88+, Firefox 85+, Safari 14+)
+
+### 项目结构
+```
+I-Prompt/
+├── public/                 # 静态资源
+├── src/
+│   ├── components/         # 可复用组件
+│   ├── pages/             # 页面组件
+│   ├── services/          # 服务层
+│   ├── constants/         # 常量配置
+│   ├── utils/            # 工具函数
+│   └── hooks/            # 自定义Hook
+├── .github/
+│   └── workflows/        # GitHub Actions配置
+├── docs/                 # 文档
+└── python_backend/       # 本地开发用Python服务(可选)
+```
+
+### 可用脚本
+
+| 命令 | 功能 |
+|------|------|
+| `npm start` | 启动开发服务器 |
+| `npm run build` | 构建生产版本 |
+| `npm run test` | 运行测试 |
+| `npm run test:coverage` | 运行测试并生成覆盖率报告 |
+| `npm run preview` | 预览构建结果 |
+| `npm run deploy` | 部署到GitHub Pages |
+| `npm run lint` | 代码检查 |
+| `npm run format` | 代码格式化 |
+
+## 🌐 部署指南
+
+### GitHub Pages自动部署
+
+1. **Fork本项目** 到您的GitHub账户
+
+2. **启用GitHub Pages**:
+   - 进入 `Settings` → `Pages`
+   - 选择 `GitHub Actions` 作为部署源
+
+3. **触发部署**:
+   - 推送代码到 `main` 或 `master` 分支
+   - GitHub Actions自动构建和部署
+
+4. **访问应用**:
+   - 部署完成后访问: `https://用户名.github.io/I-Prompt`
+
+### 手动部署
+
+```bash
+# 构建项目
+npm run build
+
+# 部署到GitHub Pages
+npm run deploy
+```
+
+### 其他平台部署
+
+- **Vercel**: 连接GitHub仓库，自动部署
+- **Netlify**: 拖拽 `build` 文件夹或连接Git
+- **静态服务器**: 将 `build` 文件夹内容上传到任意静态服务器
+
+## 🔍 性能优化
+
+### 自动化性能监控
+- **Lighthouse CI**: 每次部署自动运行性能测试
+- **Web Vitals**: 监控核心网页指标
+- **Bundle分析**: 自动分析打包大小
+
+### 优化特性
+- **代码分割**: 按路由和组件分割
+- **资源预加载**: DNS预解析、关键资源预加载
+- **图像优化**: 响应式图像、懒加载
+- **缓存策略**: 合理的缓存配置
+
+## 🤝 贡献指南
+
+### 参与贡献
+
+1. **Fork项目** 并克隆到本地
+2. **创建功能分支**: `git checkout -b feature/新功能`
+3. **提交更改**: `git commit -m '添加新功能'`
+4. **推送分支**: `git push origin feature/新功能`
+5. **创建Pull Request**
+
+### 开发规范
+
+- **代码风格**: 使用Prettier格式化
+- **提交规范**: 使用语义化提交信息
+- **测试覆盖**: 新功能需要添加测试
+- **文档更新**: 重要更改需要更新文档
+
+## 📋 更新日志
+
+### v3.0.0 (2024-12-28)
+🎉 **智能提示词库 3.0 重磅发布**
+- ✨ 全新界面设计，参考专业AI绘画工具
+- 🎨 双栏式编辑器，英文输入+中文翻译
+- 🌐 集成多引擎翻译API，智能分词翻译
+- 📚 分层标签库，6大分类300+标签
+- 🔍 智能搜索，中英文混合支持
+- ❤️ 收藏系统，个人收藏+热门推荐
+- 📝 历史记录，自动保存快速恢复
+- 🎯 一键操作，点击添加极简体验
+
+### v2.0.0 (2024-12-28)
+🎉 **智能提示词库 2.0 重磅发布**
+- ✨ 新增高级提示词编辑器
+- 🧠 智能补全系统（8个建议，按频率排序）
+- ⚖️ 权重调节功能（支持多种格式）
+- 🌐 一键翻译功能（中英文互译）
+- 💾 自定义提示词管理
+- 📊 实时统计和收藏功能
+
+### v1.0.0 (2024-12-20)
+- 🎉 首个版本发布
+- 🤖 集成DeepSeek-R1大模型
+- 🔍 世界首个开源NovelAI Stealth PNG解析器
+- 📚 完整的提示词库系统
+- 🎓 学习教程模块
+
+## 📄 许可证
+
+本项目基于 [MIT许可证](LICENSE) 开源
+
+## 🙏 致谢
+
+- **[translators](https://github.com/UlionTse/translators)** - 多引擎翻译库
+- **[stable-diffusion-inspector](https://github.com/Akegarasu/stable-diffusion-inspector)** - 元数据解析参考
+- **[NovelAI](https://novelai.net/)** - Stealth PNG技术
+- **[ComfyUI](https://github.com/comfyanonymous/ComfyUI)** - 工作流技术
+
+## 📞 联系方式
+
+- **项目主页**: [https://github.com/wjx19/I-Prompt](https://github.com/wjx19/I-Prompt)
+- **在线体验**: [https://wjx19.github.io/I-Prompt](https://wjx19.github.io/I-Prompt)
+- **问题反馈**: [GitHub Issues](https://github.com/wjx19/I-Prompt/issues)
+
+---
+
+<div align="center">
+
+**⭐ 如果这个项目对您有帮助，请给我们一个星标！**
+
+Made with ❤️ by I-Prompt Team
+
+</div>
+
+## ✨ 3.0 版本重大更新
+
+### 🌍 多语言智能输入系统
+- **支持中英文输入**：可以直接输入中文描述，如"美丽的女孩，樱花背景"
+- **自动语言检测**：系统自动检测输入语言类型
+- **智能翻译为英文**：自动将中文翻译为AI绘画标准英文提示词
+- **实时预览**：左侧输入区显示原始内容，右侧输出区显示英文结果
+
+### 🔄 强化翻译引擎
+- **12种翻译引擎**：集成百度、阿里、腾讯、有道等国产引擎 + Google、DeepL等国际引擎
+- **智能降级机制**：引擎失败时自动切换到备用引擎
+- **专业词典**：内置400+ AI绘画专业术语，确保翻译准确性
+- **批量翻译**：支持一键翻译所有标签
+
+### 📝 智能标签编辑区
+- **中文显示**：每个标签下方显示中文翻译，方便理解
+- **悬停编辑**：鼠标悬停显示详细编辑选项
+- **权重调节**：支持 (tag:1.2) 格式的权重控制
+- **括号强调**：支持 ()、{}、[] 三种括号强调方式
+- **禁用切换**：可临时禁用某些标签而不删除
+
+## 🚀 核心功能
+
+### 1. 智能提示词库 3.0
+- **分层标签系统**：6大分类，300+精选标签
+- **语义搜索**：智能搜索相关标签
+- **收藏系统**：个人收藏和热门推荐
+- **多语言支持**：标签支持中英文对照显示
+
+### 2. 智能提示词生成器
+- **接入DeepSeek-R1**：最新大模型支持
+- **中文提示生成**：支持中文描述生成英文提示词
+- **风格化生成**：根据不同绘画风格优化
+
+### 3. 专业级图像信息提取器
+- **NovelAI Stealth PNG解析**：提取隐藏的生成信息
+- **元数据读取**：支持多种图像格式
+- **参数解析**：自动识别绘画参数
+
+### 4. 智能提示词分析器
+- **语义分类**：自动分类提示词类型
+- **权重解析**：分析各标签权重影响
+- **优化建议**：提供提示词改进建议
+
+## 💡 使用方法
+
+### 基础使用
+1. **输入提示词**：在左侧智能输入区输入中文或英文描述
+2. **自动翻译**：系统自动检测语言并翻译为英文
+3. **标签管理**：在编辑区调整权重、括号、禁用状态
+4. **复制使用**：复制最终的英文提示词到AI绘画工具
+
+### 高级功能
+- **翻译引擎切换**：点击"引擎"按钮选择不同翻译服务
+- **批量翻译**：点击"翻译全部"一键翻译所有标签
+- **标签库浏览**：从下方标签库添加专业标签
+- **历史记录**：查看最近使用的提示词
+
+## 🔧 技术特性
+
+### 前端架构
+- **React 18**：最新React版本，组件化开发
+- **Tailwind CSS**：现代CSS框架，响应式设计
+- **Lucide React**：精美图标库
+
+### 翻译服务
+- **多引擎支持**：12种免费翻译引擎
+- **智能降级**：引擎失败自动切换
+- **专业词典**：AI绘画术语优化
+- **语言检测**：自动识别输入语言
+
+### 部署支持
+- **GitHub Pages**：支持静态部署
+- **Vercel/Netlify**：支持现代化部署
+- **Docker**：容器化部署
+- **Python后端**：可选Flask翻译服务
+
+## 🌟 特色亮点
+
+1. **零门槛使用**：支持中文输入，降低使用门槛
+2. **专业级输出**：确保生成标准AI绘画英文提示词
+3. **智能优化**：基于深度学习的提示词优化
+4. **丰富标签库**：300+专业标签，覆盖各种绘画需求
+5. **实时翻译**：毫秒级翻译响应，流畅用户体验
+
+## 📚 更多功能
+
+- **学习教程**：提供AI绘画提示词编写教程
+- **辅助工具**：色彩搭配、构图建议等实用工具
+- **图像提取**：从现有图像提取提示词信息
+- **风格分析**：分析不同艺术风格的提示词特点
+
+---
+
+**立即体验智能提示词库 3.0，让AI绘画创作更简单！**
+
+支持中文输入 → 自动翻译 → 专业输出 → 一键复制 → 开始创作 
+
+## 🚀 部署方式
+
+### GitHub Pages (前端)
+前端自动部署到GitHub Pages: https://wjx19.github.io/I-Prompt
+
+### Vercel (Python后端)
+Python后端部署到Vercel，为图像反推功能提供API支持。
+
+#### 部署步骤
+1. Fork本项目到你的GitHub账户
+2. 登录 [Vercel](https://vercel.com)
+3. 点击 "New Project" → Import Git Repository
+4. 选择你fork的I-Prompt项目
+5. 在Project Settings中：
+   - Framework Preset: 选择 "Other"
+   - Root Directory: 保持默认 (.)
+   - Build Command: 留空
+   - Output Directory: 留空
+6. 点击 "Deploy" 开始部署
+
+部署完成后，你会得到一个Vercel URL，比如：`https://i-prompt-api.vercel.app`
+
+#### 配置前端API地址
+部署完成后，需要更新前端配置：
+
+1. 编辑 `src/services/imageTaggingService.js`
+2. 将 `https://i-prompt-api.vercel.app/api` 替换为你的Vercel URL
+
+## ✨ 功能特性
+
+- 🎨 **智能提示词生成** - 基于DeepSeek AI的专业提示词生成
+- 🖼️ **图像反推分析** - 使用WD-Tagger识别图像标签
+- 🌍 **多语言翻译** - 支持中英文自动翻译
+- 📊 **数据可视化** - 直观的标签置信度展示
+- 💾 **结果导出** - 支持JSON格式导出分析结果
+- 📱 **响应式设计** - 完美适配桌面和移动设备
+
+## 🛠️ 本地开发
+
+### 前端开发
+```bash
+npm install
+npm start
+```
+
+### 后端开发 (可选)
+```bash
+pip install -r requirements.txt
+python server.py
+```
+
+## 🔧 技术栈
+
+- **前端**: React 18, Tailwind CSS, Lucide Icons
+- **后端**: Flask, Gradio Client, CORS
+- **部署**: GitHub Pages + Vercel
+- **AI服务**: SiliconFlow API, Hugging Face
+
+## 🌟 在线体验
+
+**🚀 [立即使用 - GitHub Pages](https://wjx19.github.io/I-Prompt)**
+
+## ✨ 核心功能
+
+### 🖼️ 图像信息提取器
+- **📋 多格式支持**: PNG、JPEG、WEBP等主流图像格式
+- **🔍 智能解析**: 自动识别Stable Diffusion、ComfyUI、NovelAI等生成工具
+- **🔐 NovelAI Stealth PNG**: 支持隐藏在Alpha通道的元数据提取
+- **⚡ ComfyUI增强**: 深度解析复杂工作流，支持自定义节点
+- **📊 可视化展示**: 三标签页设计 - 概览/智能分析/原始数据
+
+### 🧠 智能提示词分析器
+- **🏷️ 语义分类**: 8大分类 - 角色、风格、质量、构图、光照、色彩、情感、环境
+- **⚖️ 权重解析**: 支持6种权重格式 - `(())`, `{}`, `[]`, `tag:1.2`等
+- **📈 复杂度评估**: 多维度分析提示词质量和复杂度
+- **💡 智能建议**: 基于分析结果生成优化建议
+
+### 🌐 智能提示词库 3.0
+- **📝 可视化编辑**: 悬停编辑、权重调节、括号控制
+- **🔄 多引擎翻译**: 支持MyMemory、LibreTranslate、Google Web等免费API
+- **📚 专业标签库**: 6大分类，300+专业标签，支持中英文
+- **⭐ 智能管理**: 收藏、搜索、分类、历史记录
+
+### 🔧 技术特性
+- **🌍 纯前端部署**: 支持GitHub Pages，无需后端服务
+- **📱 响应式设计**: 完美适配桌面和移动设备
+- **⚡ 性能优化**: 组件懒加载、资源压缩、CDN加速
+- **🛡️ 错误处理**: 完善的异常处理和降级机制
+
+## 🚀 快速开始
+
+### 在线使用
+访问 [https://wjx19.github.io/I-Prompt](https://wjx19.github.io/I-Prompt) 立即开始使用
+
+### 本地开发
+
+```bash
+# 克隆项目
+git clone https://github.com/wjx19/I-Prompt.git
+cd I-Prompt
+
+# 安装依赖
+npm install
+
+# 启动开发服务器
+npm start
+
+# 在浏览器中打开 http://localhost:3000
+```
+
+### 本地构建
+
+```bash
+# 构建生产版本
+npm run build
+
+# 预览构建结果
+npm run preview
+```
+
+## 📦 技术架构
+
+### 前端技术栈
+- **⚛️ React 18**: 现代React特性，并发渲染
+- **🎨 Tailwind CSS**: 原子化CSS框架
+- **🔧 Lucide React**: 现代图标库
+- **📊 Exifr**: 高性能图像元数据解析
+- **🌐 Axios**: HTTP客户端
+
+### 翻译服务架构
+```
+前端应用
+    ↓
+免费翻译API (多引擎支持)
+    ├── MyMemory (1000次/天)
+    ├── LibreTranslate (20次/分钟)
+    ├── Google Web (非官方)
+    └── 内置词典 (降级方案)
+```
+
+### 部署架构
+```
+GitHub Repository
+    ↓
+GitHub Actions (自动化)
+    ├── 代码检查 & 测试
+    ├── 生产构建
+    ├── 性能测试 (Lighthouse)
+    └── 部署到 GitHub Pages
+```
+
+## 🔧 开发配置
+
+### 环境要求
+- **Node.js**: 18.x 或 20.x
+- **npm**: 8.x+
+- **浏览器**: 现代浏览器 (Chrome 88+, Firefox 85+, Safari 14+)
+
+### 项目结构
+```
+I-Prompt/
+├── public/                 # 静态资源
+├── src/
+│   ├── components/         # 可复用组件
+│   ├── pages/             # 页面组件
+│   ├── services/          # 服务层
+│   ├── constants/         # 常量配置
+│   ├── utils/            # 工具函数
+│   └── hooks/            # 自定义Hook
+├── .github/
+│   └── workflows/        # GitHub Actions配置
+├── docs/                 # 文档
+└── python_backend/       # 本地开发用Python服务(可选)
+```
+
+### 可用脚本
+
+| 命令 | 功能 |
+|------|------|
+| `npm start` | 启动开发服务器 |
+| `npm run build` | 构建生产版本 |
+| `npm run test` | 运行测试 |
+| `npm run test:coverage` | 运行测试并生成覆盖率报告 |
+| `npm run preview` | 预览构建结果 |
+| `npm run deploy` | 部署到GitHub Pages |
+| `npm run lint` | 代码检查 |
+| `npm run format` | 代码格式化 |
+
+## 🌐 部署指南
+
+### GitHub Pages自动部署
+
+1. **Fork本项目** 到您的GitHub账户
+
+2. **启用GitHub Pages**:
+   - 进入 `Settings` → `Pages`
+   - 选择 `GitHub Actions` 作为部署源
+
+3. **触发部署**:
+   - 推送代码到 `main` 或 `master` 分支
+   - GitHub Actions自动构建和部署
+
+4. **访问应用**:
+   - 部署完成后访问: `https://用户名.github.io/I-Prompt`
+
+### 手动部署
+
+```bash
+# 构建项目
+npm run build
+
+# 部署到GitHub Pages
+npm run deploy
+```
+
+### 其他平台部署
+
+- **Vercel**: 连接GitHub仓库，自动部署
+- **Netlify**: 拖拽 `build` 文件夹或连接Git
+- **静态服务器**: 将 `build` 文件夹内容上传到任意静态服务器
+
+## 🔍 性能优化
+
+### 自动化性能监控
+- **Lighthouse CI**: 每次部署自动运行性能测试
+- **Web Vitals**: 监控核心网页指标
+- **Bundle分析**: 自动分析打包大小
+
+### 优化特性
+- **代码分割**: 按路由和组件分割
+- **资源预加载**: DNS预解析、关键资源预加载
+- **图像优化**: 响应式图像、懒加载
+- **缓存策略**: 合理的缓存配置
+
+## 🤝 贡献指南
+
+### 参与贡献
+
+1. **Fork项目** 并克隆到本地
+2. **创建功能分支**: `git checkout -b feature/新功能`
+3. **提交更改**: `git commit -m '添加新功能'`
+4. **推送分支**: `git push origin feature/新功能`
+5. **创建Pull Request**
+
+### 开发规范
+
+- **代码风格**: 使用Prettier格式化
+- **提交规范**: 使用语义化提交信息
+- **测试覆盖**: 新功能需要添加测试
+- **文档更新**: 重要更改需要更新文档
+
+## 📋 更新日志
+
+### v3.0.0 (2024-12-28)
+🎉 **智能提示词库 3.0 重磅发布**
+- ✨ 全新界面设计，参考专业AI绘画工具
+- 🎨 双栏式编辑器，英文输入+中文翻译
+- 🌐 集成多引擎翻译API，智能分词翻译
+- 📚 分层标签库，6大分类300+标签
+- 🔍 智能搜索，中英文混合支持
+- ❤️ 收藏系统，个人收藏+热门推荐
+- 📝 历史记录，自动保存快速恢复
+- 🎯 一键操作，点击添加极简体验
+
+### v2.0.0 (2024-12-28)
+🎉 **智能提示词库 2.0 重磅发布**
+- ✨ 新增高级提示词编辑器
+- 🧠 智能补全系统（8个建议，按频率排序）
+- ⚖️ 权重调节功能（支持多种格式）
+- 🌐 一键翻译功能（中英文互译）
+- 💾 自定义提示词管理
+- 📊 实时统计和收藏功能
+
+### v1.0.0 (2024-12-20)
+- 🎉 首个版本发布
+- 🤖 集成DeepSeek-R1大模型
+- 🔍 世界首个开源NovelAI Stealth PNG解析器
+- 📚 完整的提示词库系统
+- 🎓 学习教程模块
+
+## 📄 许可证
+
+本项目基于 [MIT许可证](LICENSE) 开源
+
+## 🙏 致谢
+
+- **[translators](https://github.com/UlionTse/translators)** - 多引擎翻译库
+- **[stable-diffusion-inspector](https://github.com/Akegarasu/stable-diffusion-inspector)** - 元数据解析参考
+- **[NovelAI](https://novelai.net/)** - Stealth PNG技术
+- **[ComfyUI](https://github.com/comfyanonymous/ComfyUI)** - 工作流技术
+
+## 📞 联系方式
+
+- **项目主页**: [https://github.com/wjx19/I-Prompt](https://github.com/wjx19/I-Prompt)
+- **在线体验**: [https://wjx19.github.io/I-Prompt](https://wjx19.github.io/I-Prompt)
+- **问题反馈**: [GitHub Issues](https://github.com/wjx19/I-Prompt/issues)
+
+---
+
+<div align="center">
+
+**⭐ 如果这个项目对您有帮助，请给我们一个星标！**
+
+Made with ❤️ by I-Prompt Team
+
+</div>
+
+## ✨ 3.0 版本重大更新
+
+### 🌍 多语言智能输入系统
+- **支持中英文输入**：可以直接输入中文描述，如"美丽的女孩，樱花背景"
+- **自动语言检测**：系统自动检测输入语言类型
+- **智能翻译为英文**：自动将中文翻译为AI绘画标准英文提示词
+- **实时预览**：左侧输入区显示原始内容，右侧输出区显示英文结果
+
+### 🔄 强化翻译引擎
+- **12种翻译引擎**：集成百度、阿里、腾讯、有道等国产引擎 + Google、DeepL等国际引擎
+- **智能降级机制**：引擎失败时自动切换到备用引擎
+- **专业词典**：内置400+ AI绘画专业术语，确保翻译准确性
+- **批量翻译**：支持一键翻译所有标签
+
+### 📝 智能标签编辑区
+- **中文显示**：每个标签下方显示中文翻译，方便理解
+- **悬停编辑**：鼠标悬停显示详细编辑选项
+- **权重调节**：支持 (tag:1.2) 格式的权重控制
+- **括号强调**：支持 ()、{}、[] 三种括号强调方式
+- **禁用切换**：可临时禁用某些标签而不删除
+
+## 🚀 核心功能
+
+### 1. 智能提示词库 3.0
+- **分层标签系统**：6大分类，300+精选标签
+- **语义搜索**：智能搜索相关标签
+- **收藏系统**：个人收藏和热门推荐
+- **多语言支持**：标签支持中英文对照显示
+
+### 2. 智能提示词生成器
+- **接入DeepSeek-R1**：最新大模型支持
+- **中文提示生成**：支持中文描述生成英文提示词
+- **风格化生成**：根据不同绘画风格优化
+
+### 3. 专业级图像信息提取器
+- **NovelAI Stealth PNG解析**：提取隐藏的生成信息
+- **元数据读取**：支持多种图像格式
+- **参数解析**：自动识别绘画参数
+
+### 4. 智能提示词分析器
+- **语义分类**：自动分类提示词类型
+- **权重解析**：分析各标签权重影响
+- **优化建议**：提供提示词改进建议
+
+## 💡 使用方法
+
+### 基础使用
+1. **输入提示词**：在左侧智能输入区输入中文或英文描述
+2. **自动翻译**：系统自动检测语言并翻译为英文
+3. **标签管理**：在编辑区调整权重、括号、禁用状态
+4. **复制使用**：复制最终的英文提示词到AI绘画工具
+
+### 高级功能
+- **翻译引擎切换**：点击"引擎"按钮选择不同翻译服务
+- **批量翻译**：点击"翻译全部"一键翻译所有标签
+- **标签库浏览**：从下方标签库添加专业标签
+- **历史记录**：查看最近使用的提示词
+
+## 🔧 技术特性
+
+### 前端架构
+- **React 18**：最新React版本，组件化开发
+- **Tailwind CSS**：现代CSS框架，响应式设计
+- **Lucide React**：精美图标库
+
+### 翻译服务
+- **多引擎支持**：12种免费翻译引擎
+- **智能降级**：引擎失败自动切换
+- **专业词典**：AI绘画术语优化
+- **语言检测**：自动识别输入语言
+
+### 部署支持
+- **GitHub Pages**：支持静态部署
+- **Vercel/Netlify**：支持现代化部署
+- **Docker**：容器化部署
+- **Python后端**：可选Flask翻译服务
+
+## 🌟 特色亮点
+
+1. **零门槛使用**：支持中文输入，降低使用门槛
+2. **专业级输出**：确保生成标准AI绘画英文提示词
+3. **智能优化**：基于深度学习的提示词优化
+4. **丰富标签库**：300+专业标签，覆盖各种绘画需求
+5. **实时翻译**：毫秒级翻译响应，流畅用户体验
+
+## 📚 更多功能
+
+- **学习教程**：提供AI绘画提示词编写教程
+- **辅助工具**：色彩搭配、构图建议等实用工具
+- **图像提取**：从现有图像提取提示词信息
+- **风格分析**：分析不同艺术风格的提示词特点
+
+---
+
+**立即体验智能提示词库 3.0，让AI绘画创作更简单！**
+
+支持中文输入 → 自动翻译 → 专业输出 → 一键复制 → 开始创作 
+
+## 🚀 部署方式
+
+### GitHub Pages (前端)
+前端自动部署到GitHub Pages: https://wjx19.github.io/I-Prompt
+
+### Vercel (Python后端)
+Python后端部署到Vercel，为图像反推功能提供API支持。
+
+#### 部署步骤
+1. Fork本项目到你的GitHub账户
+2. 登录 [Vercel](https://vercel.com)
+3. 点击 "New Project" → Import Git Repository
+4. 选择你fork的I-Prompt项目
+5. 在Project Settings中：
+   - Framework Preset: 选择 "Other"
+   - Root Directory: 保持默认 (.)
+   - Build Command: 留空
+   - Output Directory: 留空
+6. 点击 "Deploy" 开始部署
+
+部署完成后，你会得到一个Vercel URL，比如：`https://i-prompt-api.vercel.app`
+
+#### 配置前端API地址
+部署完成后，需要更新前端配置：
+
+1. 编辑 `src/services/imageTaggingService.js`
+2. 将 `https://i-prompt-api.vercel.app/api` 替换为你的Vercel URL
+
+## ✨ 功能特性
+
+- 🎨 **智能提示词生成** - 基于DeepSeek AI的专业提示词生成
+- 🖼️ **图像反推分析** - 使用WD-Tagger识别图像标签
+- 🌍 **多语言翻译** - 支持中英文自动翻译
+- 📊 **数据可视化** - 直观的标签置信度展示
+- 💾 **结果导出** - 支持JSON格式导出分析结果
+- 📱 **响应式设计** - 完美适配桌面和移动设备
+
+## 🛠️ 本地开发
+
+### 前端开发
+```bash
+npm install
+npm start
+```
+
+### 后端开发 (可选)
+```bash
+pip install -r requirements.txt
+python server.py
+```
+
+## 🔧 技术栈
+
+- **前端**: React 18, Tailwind CSS, Lucide Icons
+- **后端**: Flask, Gradio Client, CORS
+- **部署**: GitHub Pages + Vercel
+- **AI服务**: SiliconFlow API, Hugging Face
+
+## 🌟 在线体验
+
+**🚀 [立即使用 - GitHub Pages](https://wjx19.github.io/I-Prompt)**
+
+## ✨ 核心功能
+
+### 🖼️ 图像信息提取器
+- **📋 多格式支持**: PNG、JPEG、WEBP等主流图像格式
+- **🔍 智能解析**: 自动识别Stable Diffusion、ComfyUI、NovelAI等生成工具
+- **🔐 NovelAI Stealth PNG**: 支持隐藏在Alpha通道的元数据提取
+- **⚡ ComfyUI增强**: 深度解析复杂工作流，支持自定义节点
+- **📊 可视化展示**: 三标签页设计 - 概览/智能分析/原始数据
+
+### 🧠 智能提示词分析器
+- **🏷️ 语义分类**: 8大分类 - 角色、风格、质量、构图、光照、色彩、情感、环境
+- **⚖️ 权重解析**: 支持6种权重格式 - `(())`, `{}`, `[]`, `tag:1.2`等
+- **📈 复杂度评估**: 多维度分析提示词质量和复杂度
+- **💡 智能建议**: 基于分析结果生成优化建议
+
+### 🌐 智能提示词库 3.0
+- **📝 可视化编辑**: 悬停编辑、权重调节、括号控制
+- **🔄 多引擎翻译**: 支持MyMemory、LibreTranslate、Google Web等免费API
+- **📚 专业标签库**: 6大分类，300+专业标签，支持中英文
+- **⭐ 智能管理**: 收藏、搜索、分类、历史记录
+
+### 🔧 技术特性
+- **🌍 纯前端部署**: 支持GitHub Pages，无需后端服务
+- **📱 响应式设计**: 完美适配桌面和移动设备
+- **⚡ 性能优化**: 组件懒加载、资源压缩、CDN加速
+- **🛡️ 错误处理**: 完善的异常处理和降级机制
+
+## 🚀 快速开始
+
+### 在线使用
+访问 [https://wjx19.github.io/I-Prompt](https://wjx19.github.io/I-Prompt) 立即开始使用
+
+### 本地开发
+
+```bash
+# 克隆项目
+git clone https://github.com/wjx19/I-Prompt.git
+cd I-Prompt
+
+# 安装依赖
+npm install
+
+# 启动开发服务器
+npm start
+
+# 在浏览器中打开 http://localhost:3000
+```
+
+### 本地构建
+
+```bash
+# 构建生产版本
+npm run build
+
+# 预览构建结果
+npm run preview
+```
+
+## 📦 技术架构
+
+### 前端技术栈
+- **⚛️ React 18**: 现代React特性，并发渲染
+- **🎨 Tailwind CSS**: 原子化CSS框架
+- **🔧 Lucide React**: 现代图标库
+- **📊 Exifr**: 高性能图像元数据解析
+- **🌐 Axios**: HTTP客户端
+
+### 翻译服务架构
+```
+前端应用
+    ↓
+免费翻译API (多引擎支持)
+    ├── MyMemory (1000次/天)
+    ├── LibreTranslate (20次/分钟)
+    ├── Google Web (非官方)
+    └── 内置词典 (降级方案)
+```
+
+### 部署架构
+```
+GitHub Repository
+    ↓
+GitHub Actions (自动化)
+    ├── 代码检查 & 测试
+    ├── 生产构建
+    ├── 性能测试 (Lighthouse)
+    └── 部署到 GitHub Pages
+```
+
+## 🔧 开发配置
+
+### 环境要求
+- **Node.js**: 18.x 或 20.x
+- **npm**: 8.x+
+- **浏览器**: 现代浏览器 (Chrome 88+, Firefox 85+, Safari 14+)
+
+### 项目结构
+```
+I-Prompt/
+├── public/                 # 静态资源
+├── src/
+│   ├── components/         # 可复用组件
+│   ├── pages/             # 页面组件
+│   ├── services/          # 服务层
+│   ├── constants/         # 常量配置
+│   ├── utils/            # 工具函数
+│   └── hooks/            # 自定义Hook
+├── .github/
+│   └── workflows/        # GitHub Actions配置
+├── docs/                 # 文档
+└── python_backend/       # 本地开发用Python服务(可选)
+```
+
+### 可用脚本
+
+| 命令 | 功能 |
+|------|------|
+| `npm start` | 启动开发服务器 |
+| `npm run build` | 构建生产版本 |
+| `npm run test` | 运行测试 |
+| `npm run test:coverage` | 运行测试并生成覆盖率报告 |
+| `npm run preview` | 预览构建结果 |
+| `npm run deploy` | 部署到GitHub Pages |
+| `npm run lint` | 代码检查 |
+| `npm run format` | 代码格式化 |
+
+## 🌐 部署指南
+
+### GitHub Pages自动部署
+
+1. **Fork本项目** 到您的GitHub账户
+
+2. **启用GitHub Pages**:
+   - 进入 `Settings` → `Pages`
+   - 选择 `GitHub Actions` 作为部署源
+
+3. **触发部署**:
+   - 推送代码到 `main` 或 `master` 分支
+   - GitHub Actions自动构建和部署
+
+4. **访问应用**:
+   - 部署完成后访问: `https://用户名.github.io/I-Prompt`
+
+### 手动部署
+
+```bash
+# 构建项目
+npm run build
+
+# 部署到GitHub Pages
+npm run deploy
+```
+
+### 其他平台部署
+
+- **Vercel**: 连接GitHub仓库，自动部署
+- **Netlify**: 拖拽 `build` 文件夹或连接Git
+- **静态服务器**: 将 `build` 文件夹内容上传到任意静态服务器
+
+## 🔍 性能优化
+
+### 自动化性能监控
+- **Lighthouse CI**: 每次部署自动运行性能测试
+- **Web Vitals**: 监控核心网页指标
+- **Bundle分析**: 自动分析打包大小
+
+### 优化特性
+- **代码分割**: 按路由和组件分割
+- **资源预加载**: DNS预解析、关键资源预加载
+- **图像优化**: 响应式图像、懒加载
+- **缓存策略**: 合理的缓存配置
+
+## 🤝 贡献指南
+
+### 参与贡献
+
+1. **Fork项目** 并克隆到本地
+2. **创建功能分支**: `git checkout -b feature/新功能`
+3. **提交更改**: `git commit -m '添加新功能'`
+4. **推送分支**: `git push origin feature/新功能`
+5. **创建Pull Request**
+
+### 开发规范
+
+- **代码风格**: 使用Prettier格式化
+- **提交规范**: 使用语义化提交信息
+- **测试覆盖**: 新功能需要添加测试
+- **文档更新**: 重要更改需要更新文档
+
+## 📋 更新日志
+
+### v3.0.0 (2024-12-28)
+🎉 **智能提示词库 3.0 重磅发布**
+- ✨ 全新界面设计，参考专业AI绘画工具
+- 🎨 双栏式编辑器，英文输入+中文翻译
+- 🌐 集成多引擎翻译API，智能分词翻译
+- 📚 分层标签库，6大分类300+标签
+- 🔍 智能搜索，中英文混合支持
+- ❤️ 收藏系统，个人收藏+热门推荐
+- 📝 历史记录，自动保存快速恢复
+- 🎯 一键操作，点击添加极简体验
+
+### v2.0.0 (2024-12-28)
+🎉 **智能提示词库 2.0 重磅发布**
+- ✨ 新增高级提示词编辑器
+- 🧠 智能补全系统（8个建议，按频率排序）
+- ⚖️ 权重调节功能（支持多种格式）
+- 🌐 一键翻译功能（中英文互译）
+- 💾 自定义提示词管理
+- 📊 实时统计和收藏功能
+
+### v1.0.0 (2024-12-20)
+- 🎉 首个版本发布
+- 🤖 集成DeepSeek-R1大模型
+- 🔍 世界首个开源NovelAI Stealth PNG解析器
+- 📚 完整的提示词库系统
+- 🎓 学习教程模块
+
+## 📄 许可证
+
+本项目基于 [MIT许可证](LICENSE) 开源
+
+## 🙏 致谢
+
+- **[translators](https://github.com/UlionTse/translators)** - 多引擎翻译库
+- **[stable-diffusion-inspector](https://github.com/Akegarasu/stable-diffusion-inspector)** - 元数据解析参考
+- **[NovelAI](https://novelai.net/)** - Stealth PNG技术
+- **[ComfyUI](https://github.com/comfyanonymous/ComfyUI)** - 工作流技术
+
+## 📞 联系方式
+
+- **项目主页**: [https://github.com/wjx19/I-Prompt](https://github.com/wjx19/I-Prompt)
+- **在线体验**: [https://wjx19.github.io/I-Prompt](https://wjx19.github.io/I-Prompt)
+- **问题反馈**: [GitHub Issues](https://github.com/wjx19/I-Prompt/issues)
+
+---
+
+<div align="center">
+
+**⭐ 如果这个项目对您有帮助，请给我们一个星标！**
+
+Made with ❤️ by I-Prompt Team
+
+</div>
+
+## ✨ 3.0 版本重大更新
+
+### 🌍 多语言智能输入系统
+- **支持中英文输入**：可以直接输入中文描述，如"美丽的女孩，樱花背景"
+- **自动语言检测**：系统自动检测输入语言类型
+- **智能翻译为英文**：自动将中文翻译为AI绘画标准英文提示词
+- **实时预览**：左侧输入区显示原始内容，右侧输出区显示英文结果
+
+### 🔄 强化翻译引擎
+- **12种翻译引擎**：集成百度、阿里、腾讯、有道等国产引擎 + Google、DeepL等国际引擎
+- **智能降级机制**：引擎失败时自动切换到备用引擎
+- **专业词典**：内置400+ AI绘画专业术语，确保翻译准确性
+- **批量翻译**：支持一键翻译所有标签
+
+### 📝 智能标签编辑区
+- **中文显示**：每个标签下方显示中文翻译，方便理解
+- **悬停编辑**：鼠标悬停显示详细编辑选项
+- **权重调节**：支持 (tag:1.2) 格式的权重控制
+- **括号强调**：支持 ()、{}、[] 三种括号强调方式
+- **禁用切换**：可临时禁用某些标签而不删除
+
+## 🚀 核心功能
+
+### 1. 智能提示词库 3.0
+- **分层标签系统**：6大分类，300+精选标签
+- **语义搜索**：智能搜索相关标签
+- **收藏系统**：个人收藏和热门推荐
+- **多语言支持**：标签支持中英文对照显示
+
+### 2. 智能提示词生成器
+- **接入DeepSeek-R1**：最新大模型支持
+- **中文提示生成**：支持中文描述生成英文提示词
+- **风格化生成**：根据不同绘画风格优化
+
+### 3. 专业级图像信息提取器
+- **NovelAI Stealth PNG解析**：提取隐藏的生成信息
+- **元数据读取**：支持多种图像格式
+- **参数解析**：自动识别绘画参数
+
+### 4. 智能提示词分析器
+- **语义分类**：自动分类提示词类型
+- **权重解析**：分析各标签权重影响
+- **优化建议**：提供提示词改进建议
+
+## 💡 使用方法
+
+### 基础使用
+1. **输入提示词**：在左侧智能输入区输入中文或英文描述
+2. **自动翻译**：系统自动检测语言并翻译为英文
+3. **标签管理**：在编辑区调整权重、括号、禁用状态
+4. **复制使用**：复制最终的英文提示词到AI绘画工具
+
+### 高级功能
+- **翻译引擎切换**：点击"引擎"按钮选择不同翻译服务
+- **批量翻译**：点击"翻译全部"一键翻译所有标签
+- **标签库浏览**：从下方标签库添加专业标签
+- **历史记录**：查看最近使用的提示词
+
+## 🔧 技术特性
+
+### 前端架构
+- **React 18**：最新React版本，组件化开发
+- **Tailwind CSS**：现代CSS框架，响应式设计
+- **Lucide React**：精美图标库
+
+### 翻译服务
+- **多引擎支持**：12种免费翻译引擎
+- **智能降级**：引擎失败自动切换
+- **专业词典**：AI绘画术语优化
+- **语言检测**：自动识别输入语言
+
+### 部署支持
+- **GitHub Pages**：支持静态部署
+- **Vercel/Netlify**：支持现代化部署
+- **Docker**：容器化部署
+- **Python后端**：可选Flask翻译服务
+
+## 🌟 特色亮点
+
+1. **零门槛使用**：支持中文输入，降低使用门槛
+2. **专业级输出**：确保生成标准AI绘画英文提示词
+3. **智能优化**：基于深度学习的提示词优化
+4. **丰富标签库**：300+专业标签，覆盖各种绘画需求
+5. **实时翻译**：毫秒级翻译响应，流畅用户体验
+
+## 📚 更多功能
+
+- **学习教程**：提供AI绘画提示词编写教程
+- **辅助工具**：色彩搭配、构图建议等实用工具
+- **图像提取**：从现有图像提取提示词信息
+- **风格分析**：分析不同艺术风格的提示词特点
+
+---
+
+**立即体验智能提示词库 3.0，让AI绘画创作更简单！**
+
+支持中文输入 → 自动翻译 → 专业输出 → 一键复制 → 开始创作 

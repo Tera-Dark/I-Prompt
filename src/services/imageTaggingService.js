@@ -5,8 +5,10 @@
 
 // WD-Tagger 配置
 const WD_TAGGER_CONFIG = {
-  // 本地API配置
-  localApiUrl: 'http://localhost:5000/api',
+  // 根据环境选择API URL
+  localApiUrl: process.env.NODE_ENV === 'production' 
+    ? 'https://i-prompt-api.vercel.app/api'  // 生产环境：Vercel部署
+    : 'http://localhost:5000/api',           // 开发环境：本地服务器
   
   // 可用的模型列表
   models: [
@@ -19,16 +21,11 @@ const WD_TAGGER_CONFIG = {
   defaultModel: "SmilingWolf/wd-swinv2-tagger-v3",
   
   // 请求配置
-  timeout: 60000,
+  timeout: 60000, // 60秒超时
   maxFileSize: 10 * 1024 * 1024, // 10MB
   
   // 支持的图像格式
-  supportedFormats: [
-    'image/jpeg',
-    'image/jpg', 
-    'image/png',
-    'image/webp'
-  ]
+  supportedFormats: ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 };
 
 /**

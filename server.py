@@ -1,9 +1,10 @@
 """
 WD-Tagger 图像反推 Python 后端服务器
 基于 Gradio Client 的稳定实现
+支持Vercel无服务器部署
 """
 
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
 import io
@@ -14,11 +15,26 @@ import tempfile
 from gradio_client import Client, handle_file
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=["https://wjx19.github.io", "http://localhost:3000"])
+
+# 全局客户端实例（复用连接）
+_gradio_client = None
+
+def get_gradio_client():
+    """获取或创建Gradio客户端（全局复用）"""
+    global _gradio_client
+    if _gradio_client is None:
+        try:
+            print("正在连接到WD Tagger...")
+            _gradio_client = Client("SmilingWolf/wd-tagger")
+            print("WD Tagger客户端连接成功")
+        except Exception as e:
+            print(f"连接WD Tagger失败: {str(e)}")
+            raise e
+    return _gradio_client
 
 class WDTaggerProxy:
     def __init__(self):
-        self.client = None
         self.models = [
             "SmilingWolf/wd-swinv2-tagger-v3",
             "SmilingWolf/wd-convnext-tagger-v3", 
@@ -27,18 +43,6 @@ class WDTaggerProxy:
             "SmilingWolf/wd-eva02-large-tagger-v3"
         ]
         self.default_model = "SmilingWolf/wd-swinv2-tagger-v3"
-
-    def get_client(self):
-        """获取或创建Gradio客户端"""
-        if self.client is None:
-            try:
-                print("正在连接到WD Tagger...")
-                self.client = Client("SmilingWolf/wd-tagger")
-                print("WD Tagger客户端连接成功")
-            except Exception as e:
-                print(f"连接WD Tagger失败: {str(e)}")
-                raise e
-        return self.client
 
     def analyze_image(self, image_file, model_repo=None, general_thresh=0.35, general_mcut_enabled=False, character_thresh=0.85, character_mcut_enabled=False):
         """
@@ -57,7 +61,7 @@ class WDTaggerProxy:
             
             try:
                 # 获取Gradio客户端
-                client = self.get_client()
+                client = get_gradio_client()
                 
                 print("正在调用WD Tagger API...")
                 print(f"使用模型: {model_repo or self.default_model}")
@@ -313,7 +317,8 @@ def health_check():
         'status': 'healthy',
         'service': 'WD Tagger Proxy',
         'version': '2.0.0',
-        'gradio_client': 'enabled'
+        'gradio_client': 'enabled',
+        'deployment': 'vercel'
     })
 
 @app.errorhandler(413)
@@ -330,8 +335,13 @@ def internal_error(e):
     """
     return jsonify({'error': '服务器内部错误'}), 500
 
+# Vercel无服务器函数入口
+def handler(event, context):
+    """Vercel无服务器函数处理器"""
+    return app(event, context)
+
 if __name__ == '__main__':
-    # 设置最大文件大小为10MB
+    # 本地开发模式
     app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
     
     print("WD Tagger 代理服务器启动中...")
