@@ -26,11 +26,14 @@ def get_gradio_client():
     if _gradio_client is None:
         try:
             print("正在连接到WD Tagger...")
-            _gradio_client = Client("SmilingWolf/wd-tagger")
+            # 增加超时时间，适应Vercel环境
+            _gradio_client = Client("SmilingWolf/wd-tagger", timeout=60)
             print("WD Tagger客户端连接成功")
         except Exception as e:
             print(f"连接WD Tagger失败: {str(e)}")
-            raise e
+            # 在健康检查时不抛出异常，允许延迟初始化
+            _gradio_client = None
+            return None
     return _gradio_client
 
 class WDTaggerProxy:
@@ -311,15 +314,26 @@ def analyze_image():
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """
-    健康检查端点
+    健康检查端点 - 快速响应，不检查Gradio连接
     """
-    return jsonify({
-        'status': 'healthy',
-        'service': 'WD Tagger Proxy',
-        'version': '2.0.0',
-        'gradio_client': 'enabled',
-        'deployment': 'vercel'
-    })
+    try:
+        # 简单检查，不尝试连接Gradio（避免冷启动延迟）
+        global _gradio_client
+        gradio_status = 'ready' if _gradio_client is not None else 'initializing'
+        
+        return jsonify({
+            'status': 'healthy',
+            'service': 'WD Tagger Proxy',
+            'version': '2.0.0',
+            'gradio_client': gradio_status,
+            'deployment': 'vercel',
+            'timestamp': os.environ.get('VERCEL_DEPLOYMENT_ID', 'local')
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500
 
 @app.errorhandler(413)
 def too_large(e):

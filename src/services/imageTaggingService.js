@@ -21,7 +21,7 @@ const WD_TAGGER_CONFIG = {
   defaultModel: "SmilingWolf/wd-swinv2-tagger-v3",
   
   // 请求配置
-  timeout: 60000, // 60秒超时
+  timeout: 120000, // 120秒超时（考虑Gradio API调用时间）
   maxFileSize: 10 * 1024 * 1024, // 10MB
   
   // 支持的图像格式
@@ -62,7 +62,7 @@ const checkBackendHealth = async () => {
   try {
     const response = await fetch(`${WD_TAGGER_CONFIG.localApiUrl}/health`, {
       method: 'GET',
-      signal: AbortSignal.timeout(5000)
+      signal: AbortSignal.timeout(60000)  // 延长到60秒，考虑Vercel冷启动
     });
     
     if (response.ok) {
