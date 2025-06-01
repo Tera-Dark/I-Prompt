@@ -23,12 +23,8 @@ def get_gradio_client():
             print("正在连接到WD Tagger...")
             print("尝试连接到 Hugging Face Spaces...")
             
-            # 为Vercel环境优化的连接设置
-            _gradio_client = Client(
-                "SmilingWolf/wd-tagger", 
-                timeout=180,  # 增加超时时间
-                verbose=True  # 启用详细日志
-            )
+            # 按照官方文档初始化客户端
+            _gradio_client = Client("SmilingWolf/wd-tagger")
             print("WD Tagger客户端连接成功")
             
         except Exception as e:
