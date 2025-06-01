@@ -13,6 +13,9 @@
       "use": "@vercel/python"
     }
   ],
+  "buildCommand": "npm run build",
+  "outputDirectory": "build",
+  "installCommand": "npm install",
   "routes": [
     {
       "src": "/api/(.*)",
