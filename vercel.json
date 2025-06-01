@@ -15,5 +15,6 @@
       "src": "/health",
       "dest": "/server.py"
     }
-  ]
+  ],
+  "alias": ["i-prompt-api.vercel.app"]
 } 
