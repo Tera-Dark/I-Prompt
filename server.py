@@ -15,7 +15,7 @@ import tempfile
 from gradio_client import Client, handle_file
 
 app = Flask(__name__)
-CORS(app, origins=["https://Tera-Dark.github.io", "https://tera-dark.github.io", "http://localhost:3000", "https://*.vercel.app"], supports_credentials=True)
+CORS(app, origins=["*"], supports_credentials=False, allow_headers=["*"], methods=["GET", "POST", "OPTIONS"])
 
 # 全局客户端实例（复用连接）
 _gradio_client = None
@@ -338,13 +338,23 @@ def internal_error(e):
 # 配置文件上传大小限制
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
 
-# Vercel无服务器函数入口
+# 为Vercel导出app - 这是关键！
+app = app
+
+# 添加OPTIONS处理，确保CORS预检请求正常
+@app.before_request
+def handle_preflight():
+    if request.method == "OPTIONS":
+        response = jsonify({})
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add('Access-Control-Allow-Headers', "*")
+        response.headers.add('Access-Control-Allow-Methods', "*")
+        return response
+
+# Vercel需要的handler函数  
 def handler(event, context):
     """Vercel无服务器函数处理器"""
-    return app
-
-# 为Vercel导出app
-application = app
+    return app(event, context)
 
 if __name__ == '__main__':
     # 本地开发模式
