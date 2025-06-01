@@ -16,16 +16,27 @@ app = Flask(__name__)
 _gradio_client = None
 
 def get_gradio_client():
-    """获取或创建Gradio客户端"""
+    """获取或创建Gradio客户端（优化Vercel环境）"""
     global _gradio_client
     if _gradio_client is None:
         try:
             print("正在连接到WD Tagger...")
-            _gradio_client = Client("SmilingWolf/wd-tagger", timeout=60)
+            print("尝试连接到 Hugging Face Spaces...")
+            
+            # 为Vercel环境优化的连接设置
+            _gradio_client = Client(
+                "SmilingWolf/wd-tagger", 
+                timeout=180,  # 增加超时时间
+                verbose=True  # 启用详细日志
+            )
             print("WD Tagger客户端连接成功")
+            
         except Exception as e:
             print(f"连接WD Tagger失败: {str(e)}")
-            return None
+            print(f"错误类型: {type(e).__name__}")
+            # 重置客户端，下次重试
+            _gradio_client = None
+            raise e  # 抛出原始错误，不隐藏问题
     return _gradio_client
 
 class WDTaggerProxy:
@@ -40,7 +51,7 @@ class WDTaggerProxy:
         self.default_model = "SmilingWolf/wd-swinv2-tagger-v3"
 
     def analyze_image(self, image_file, model_repo=None, general_thresh=0.35, general_mcut_enabled=False, character_thresh=0.85, character_mcut_enabled=False):
-        """使用Gradio客户端调用WD Tagger API"""
+        """使用Gradio客户端调用真正的WD Tagger API"""
         try:
             print(f"开始处理图像文件: {image_file.filename}")
             print(f"文件大小: {len(image_file.read())} bytes")
@@ -55,13 +66,11 @@ class WDTaggerProxy:
             try:
                 # 获取Gradio客户端
                 client = get_gradio_client()
-                if client is None:
-                    raise Exception("Gradio客户端初始化失败")
                 
                 print("正在调用WD Tagger API...")
                 print(f"使用模型: {model_repo or self.default_model}")
                 
-                # 调用Gradio API
+                # 调用真正的Gradio API
                 result = client.predict(
                     image=handle_file(tmp_file_path),
                     model_repo=model_repo or self.default_model,
@@ -73,6 +82,7 @@ class WDTaggerProxy:
                 )
                 
                 print("WD Tagger API调用成功")
+                print(f"返回结果类型: {type(result)}")
                 
                 # 解析结果
                 parsed_result = self.parse_gradio_result(result)
@@ -230,13 +240,14 @@ def handle_preflight():
 
 @app.route('/api/health', methods=['GET'])
 def health():
+    """健康检查 - 不测试Gradio连接，避免冷启动延迟"""
     return jsonify({
         'status': 'healthy',
         'service': 'WD Tagger Proxy',
         'message': 'Server is running',
-        'version': '3.0.0',
+        'version': '3.1.0',
         'deployment': 'vercel',
-        'gradio_client': 'ready' if _gradio_client else 'initializing'
+        'gradio_client': 'ready' if _gradio_client else 'will_initialize_on_first_use'
     })
 
 @app.route('/', methods=['GET'])
@@ -244,12 +255,12 @@ def root():
     return jsonify({
         'message': 'WD Tagger API Server',
         'endpoints': ['/api/health', '/api/wd-tagger'],
-        'version': '3.0.0'
+        'version': '3.1.0'
     })
 
 @app.route('/api/wd-tagger', methods=['POST'])
 def analyze_image():
-    """图像分析API端点 - 正式版本"""
+    """图像分析API端点 - 真正的WD-Tagger功能"""
     try:
         print("收到图像分析请求")
         
