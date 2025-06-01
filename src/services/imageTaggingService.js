@@ -7,8 +7,8 @@
 const WD_TAGGER_CONFIG = {
   // 根据环境选择API URL
   localApiUrl: process.env.NODE_ENV === 'production' 
-    ? 'https://i-prompt-mldceg1hm-tera-darks-projects.vercel.app/api'  // 生产环境：最新部署测试
-    : 'http://localhost:5000/api',               // 开发环境：本地服务器
+    ? 'https://i-prompt-api.vercel.app/api'  // 生产环境：固定域名
+    : 'http://localhost:5000/api',           // 开发环境：本地服务器
   
   // 可用的模型列表
   models: [
