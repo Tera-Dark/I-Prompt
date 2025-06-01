@@ -9,11 +9,21 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/server.py"
+      "dest": "/server.py",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "*"
+      }
     },
     {
       "src": "/health",
-      "dest": "/server.py"
+      "dest": "/server.py",
+      "headers": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "*"
+      }
     }
   ],
   "alias": ["i-prompt-api.vercel.app"]

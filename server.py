@@ -355,6 +355,14 @@ app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
 # 为Vercel导出app - 这是关键！
 app = app
 
+# 添加所有响应的CORS头
+@app.after_request
+def after_request(response):
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization")
+    response.headers.add('Access-Control-Allow-Methods', "GET,PUT,POST,DELETE,OPTIONS")
+    return response
+
 # 添加OPTIONS处理，确保CORS预检请求正常
 @app.before_request
 def handle_preflight():
