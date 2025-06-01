@@ -13,49 +13,10 @@
       "use": "@vercel/python"
     }
   ],
-  "buildCommand": "npm run build",
-  "outputDirectory": "build",
-  "installCommand": "npm install",
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "/server.py"
-    },
-    {
-      "src": "/static/js/(.*)",
-      "dest": "/static/js/$1"
-    },
-    {
-      "src": "/static/css/(.*)",
-      "dest": "/static/css/$1"
-    },
-    {
-      "src": "/static/media/(.*)",
-      "dest": "/static/media/$1"
-    },
-    {
-      "src": "/static/(.*)",
-      "dest": "/static/$1"
-    },
-    {
-      "src": "/manifest.json",
-      "dest": "/manifest.json"
-    },
-    {
-      "src": "/favicon.ico",
-      "dest": "/favicon.ico"
-    },
-    {
-      "src": "/robots.txt",
-      "dest": "/robots.txt"
-    },
-    {
-      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|json|txt))",
-      "dest": "/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/api/(.*)",
+      "destination": "/server.py"
     }
   ],
   "headers": [
