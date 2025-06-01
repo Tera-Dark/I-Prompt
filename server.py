@@ -15,7 +15,7 @@ import tempfile
 from gradio_client import Client, handle_file
 
 app = Flask(__name__)
-CORS(app, origins=["https://wjx19.github.io", "http://localhost:3000"])
+CORS(app, origins=["https://Tera-Dark.github.io", "http://localhost:3000", "https://*.vercel.app"], supports_credentials=True)
 
 # 全局客户端实例（复用连接）
 _gradio_client = None
@@ -335,15 +335,19 @@ def internal_error(e):
     """
     return jsonify({'error': '服务器内部错误'}), 500
 
+# 配置文件上传大小限制
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
+
 # Vercel无服务器函数入口
 def handler(event, context):
     """Vercel无服务器函数处理器"""
-    return app(event, context)
+    return app
+
+# 为Vercel导出app
+application = app
 
 if __name__ == '__main__':
     # 本地开发模式
-    app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
-    
     print("WD Tagger 代理服务器启动中...")
     print("使用官方Gradio客户端进行API调用")
     print("访问地址: http://localhost:5000")
@@ -355,4 +359,5 @@ if __name__ == '__main__':
     for model in proxy.models:
         print(f"  - {model}")
     
-    app.run(debug=True, host='0.0.0.0', port=5000) 
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=False, host='0.0.0.0', port=port) 
