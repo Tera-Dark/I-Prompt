@@ -15,7 +15,7 @@ import tempfile
 from gradio_client import Client, handle_file
 
 app = Flask(__name__)
-CORS(app, origins=["https://Tera-Dark.github.io", "http://localhost:3000", "https://*.vercel.app"], supports_credentials=True)
+CORS(app, origins=["https://Tera-Dark.github.io", "https://tera-dark.github.io", "http://localhost:3000", "https://*.vercel.app"], supports_credentials=True)
 
 # 全局客户端实例（复用连接）
 _gradio_client = None

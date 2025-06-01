@@ -7,8 +7,8 @@
 const WD_TAGGER_CONFIG = {
   // 根据环境选择API URL
   localApiUrl: process.env.NODE_ENV === 'production' 
-    ? '/api'                                 // 生产环境：Vercel相对路径
-    : 'http://localhost:5000/api',           // 开发环境：本地服务器
+    ? 'https://i-prompt-8jshtmo1q-tera-darks-projects.vercel.app/api'  // 生产环境：独立后端
+    : 'http://localhost:5000/api',               // 开发环境：本地服务器
   
   // 可用的模型列表
   models: [

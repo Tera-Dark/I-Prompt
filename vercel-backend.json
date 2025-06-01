@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "name": "i-prompt-backend",
+  "functions": {
+    "server.py": {
+      "runtime": "python3.9",
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/server.py"
+    },
+    {
+      "source": "/health",
+      "destination": "/server.py"
+    }
+  ],
+  "env": {
+    "PYTHONPATH": "/var/task"
+  }
+} 
