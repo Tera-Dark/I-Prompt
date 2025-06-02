@@ -22,8 +22,7 @@ const PromptGeneratorPage = () => {
     generatePrompt,
     copyPrompt,
     insertTag,
-    getApiStatus,
-    refreshApiStatus
+    getApiStatus
   } = usePromptGenerator();
 
   const [showQuickTags, setShowQuickTags] = useState(false);
