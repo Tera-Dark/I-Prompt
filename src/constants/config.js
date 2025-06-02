@@ -1,16 +1,44 @@
-// API配置
+// API配置 - 多个备用选项
 export const API_CONFIG = {
-  SILICONFLOW_API_KEY: process.env.REACT_APP_SILICONFLOW_API_KEY || 'sk-zzvfbjuitzusxvjwztcfrlpnjzcfdkutdkgxnhrwgihtytkh',
-  BASE_URL: process.env.REACT_APP_API_BASE_URL || 'https://api.siliconflow.cn/v1',
-  ENDPOINTS: {
-    CHAT_COMPLETIONS: '/chat/completions'
-  },
-  DEFAULT_MODEL: 'deepseek-ai/DeepSeek-R1',
+  // 主要API选项
+  APIS: [
+    {
+      name: 'SiliconFlow',
+      provider: 'siliconflow',
+      baseUrl: 'https://api.siliconflow.cn/v1',
+      apiKey: process.env.REACT_APP_SILICONFLOW_API_KEY || 'sk-zzvfbjuitzusxvjwztcfrlpnjzcfdkutdkgxnhrwgihtytkh',
+      model: 'deepseek-ai/DeepSeek-R1',
+      available: true,
+      priority: 1
+    },
+    {
+      name: 'OpenRouter-DeepSeek',
+      provider: 'openrouter',
+      baseUrl: 'https://openrouter.ai/api/v1',
+      apiKey: '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',
+      model: 'deepseek/deepseek-chat',
+      available: true,
+      priority: 2,
+      headers: {
+        'HTTP-Referer': window.location.origin, // OpenRouter要求的额外头
+        'X-Title': 'I-Prompt Assistant'
+      }
+    }
+  ],
+
+  // 默认参数
   DEFAULT_PARAMS: {
     max_tokens: 512,
     temperature: 0.7,
     top_p: 0.9,
     stream: false
+  },
+
+  // 健康检查配置
+  HEALTH_CHECK: {
+    TIMEOUT: 5000, // 5秒超时
+    RETRY_INTERVAL: 30000, // 30秒重试间隔
+    MAX_RETRIES: 3 // 最大重试次数
   }
 };
 
@@ -20,11 +48,13 @@ export const APP_CONFIG = {
   MAX_INPUT_LENGTH: 500,
   MIN_INPUT_LENGTH: 2,
   
-  // API配置
+  // API配置 - 兼容旧版本
   API: {
-    SILICONFLOW_API_KEY: process.env.REACT_APP_SILICONFLOW_API_KEY || 'sk-zzvfbjuitzusxvjwztcfrlpnjzcfdkutdkgxnhrwgihtytkh',
-    BASE_URL: process.env.REACT_APP_API_BASE_URL || 'https://api.siliconflow.cn/v1/chat/completions',
-    MODEL: 'deepseek-ai/DeepSeek-R1',
+    // 当前使用的API (动态设置)
+    CURRENT_API: null,
+    // 备用API列表
+    AVAILABLE_APIS: [],
+    // 默认参数
     MAX_TOKENS: 512,
     TEMPERATURE_RANGE: [0.6, 1.0],
     TOP_P: 0.9

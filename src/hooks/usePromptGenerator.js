@@ -1,10 +1,12 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { validateInput, cleanPrompt } from '../utils/validation';
 import { copyToClipboard } from '../utils/clipboard';
 import { APP_CONFIG, ERROR_MESSAGES } from '../constants/config';
+import { persistentStorage } from '../utils/persistentStorage';
+import apiManager from '../services/apiManager';
 
 /**
- * 提示词生成器 Hook - 使用 DeepSeek API
+ * 提示词生成器 Hook - 使用多API自动切换
  */
 export const usePromptGenerator = () => {
   const [inputText, setInputText] = useState('');
@@ -14,6 +16,47 @@ export const usePromptGenerator = () => {
   const [generationCount, setGenerationCount] = useState(0);
   const [apiError, setApiError] = useState(null);
   const [validationErrors, setValidationErrors] = useState([]);
+  const [currentSessionId, setCurrentSessionId] = useState(null);
+  const [savedResults, setSavedResults] = useState([]);
+  const [currentApiInfo, setCurrentApiInfo] = useState(null);
+
+  // 初始化时恢复数据
+  useEffect(() => {
+    // 恢复草稿内容
+    const draft = persistentStorage.getDraftContent();
+    if (draft) {
+      setInputText(draft.inputText || '');
+      setSelectedStyle(draft.selectedStyle || '');
+      console.log('✅ 恢复草稿内容');
+    }
+
+    // 加载历史记录
+    const history = persistentStorage.getGeneratedPrompts();
+    setSavedResults(history.slice(0, 10)); // 显示最近10条
+
+    // 监听API切换事件
+    apiManager.onApiSwitch = (newApi, oldApi) => {
+      setCurrentApiInfo(newApi);
+      console.log(`🔄 [Hook] API已切换: ${oldApi} -> ${newApi.name}`);
+    };
+
+    // 设置初始API信息
+    setCurrentApiInfo(apiManager.getCurrentApi());
+  }, []);
+
+  // 自动保存草稿
+  useEffect(() => {
+    if (inputText || selectedStyle) {
+      const timer = setTimeout(() => {
+        persistentStorage.saveDraftContent({
+          inputText,
+          selectedStyle
+        });
+      }, 2000); // 2秒后自动保存
+
+      return () => clearTimeout(timer);
+    }
+  }, [inputText, selectedStyle]);
 
   /**
    * 验证输入
@@ -25,15 +68,13 @@ export const usePromptGenerator = () => {
   }, []);
 
   /**
-   * 生成提示词 - 使用 DeepSeek API
+   * 生成提示词 - 使用API管理器自动切换
    */
   const generateApiPrompt = useCallback(async (text, style) => {
-    const requestBody = {
-      model: APP_CONFIG.API.MODEL,
-      messages: [
-        {
-          role: 'system',
-          content: `你是一个专业的AI绘画提示词生成助手。请根据用户的描述，生成高质量的英文提示词。
+    const messages = [
+      {
+        role: 'system',
+        content: `你是一个专业的AI绘画提示词生成助手。请根据用户的描述，生成高质量的英文提示词。
 
 要求：
 1. 输出纯英文提示词，用逗号分隔
@@ -45,32 +86,20 @@ export const usePromptGenerator = () => {
 7. 提示词要具体生动，包含丰富的细节描述
 
 风格要求：${style || '通用风格'}`
-        },
-        {
-          role: 'user',
-          content: `请为以下描述生成AI绘画提示词：${text}`
-        }
-      ],
+      },
+      {
+        role: 'user',
+        content: `请为以下描述生成AI绘画提示词：${text}`
+      }
+    ];
+
+    // 使用API管理器发送请求，自动处理切换
+    const data = await apiManager.makeRequest(messages, {
       max_tokens: APP_CONFIG.API.MAX_TOKENS,
       temperature: 0.7,
       top_p: APP_CONFIG.API.TOP_P
-    };
-
-    const response = await fetch(APP_CONFIG.API.BASE_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${APP_CONFIG.API.SILICONFLOW_API_KEY}`
-      },
-      body: JSON.stringify(requestBody)
     });
 
-    if (!response.ok) {
-      throw new Error(`API请求失败: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    
     if (!data.choices || !data.choices[0] || !data.choices[0].message) {
       throw new Error(ERROR_MESSAGES.API.INVALID_RESPONSE);
     }
@@ -79,7 +108,7 @@ export const usePromptGenerator = () => {
   }, []);
 
   /**
-   * 主生成函数 - 只使用 DeepSeek API
+   * 主生成函数 - 使用API管理器自动切换
    */
   const generatePrompt = useCallback(async () => {
     // 验证输入
@@ -91,18 +120,56 @@ export const usePromptGenerator = () => {
     setApiError(null);
 
     try {
+      // 保存输入历史
+      persistentStorage.saveInputHistory(inputText, selectedStyle);
+
       const result = await generateApiPrompt(inputText, selectedStyle);
       setGeneratedPrompt(result);
-      setGenerationCount(prev => prev + 1);
+      
+      // 保存生成结果
+      const newGenerationCount = generationCount + 1;
+      setGenerationCount(newGenerationCount);
+      const sessionId = persistentStorage.saveGeneratedPrompt({
+        inputText,
+        selectedStyle,
+        generatedPrompt: result,
+        source: 'ai',
+        generationCount: newGenerationCount,
+        apiUsed: apiManager.getCurrentApi()?.name || 'Unknown'
+      });
+
+      setCurrentSessionId(sessionId);
+
+      // 更新历史列表
+      const updatedHistory = persistentStorage.getGeneratedPrompts();
+      setSavedResults(updatedHistory.slice(0, 10));
+
+      // 清除草稿
+      persistentStorage.clearDraftContent();
+
+      // 更新当前API信息
+      setCurrentApiInfo(apiManager.getCurrentApi());
+
       return true;
     } catch (error) {
-      console.error('DeepSeek API 生成提示词失败:', error);
-      setApiError(error.message || ERROR_MESSAGES.API.UNKNOWN_ERROR);
+      console.error('API 生成提示词失败:', error);
+      
+      // 获取详细的API状态信息
+      const statusReport = apiManager.getStatusReport();
+      const errorMessage = error.message || ERROR_MESSAGES.API.UNKNOWN_ERROR;
+      
+      // 如果没有可用的API，提供更详细的错误信息
+      if (statusReport.availableApis === 0) {
+        setApiError('所有API服务暂时不可用，请稍后重试');
+      } else {
+        setApiError(`${errorMessage} (当前使用: ${statusReport.currentApi})`);
+      }
+      
       return false;
     } finally {
       setIsGenerating(false);
     }
-  }, [inputText, selectedStyle, validatePromptInput, generateApiPrompt]);
+  }, [inputText, selectedStyle, validatePromptInput, generateApiPrompt, generationCount]);
 
   /**
    * 复制提示词
@@ -161,6 +228,21 @@ export const usePromptGenerator = () => {
     return '';
   }, []);
 
+  /**
+   * 获取API状态信息
+   */
+  const getApiStatus = useCallback(() => {
+    return apiManager.getStatusReport();
+  }, []);
+
+  /**
+   * 手动刷新API状态
+   */
+  const refreshApiStatus = useCallback(async () => {
+    await apiManager.refreshApis();
+    setCurrentApiInfo(apiManager.getCurrentApi());
+  }, []);
+
   return {
     // 状态
     inputText,
@@ -170,6 +252,9 @@ export const usePromptGenerator = () => {
     generationCount,
     apiError,
     validationErrors,
+    currentSessionId,
+    savedResults,
+    currentApiInfo,
     
     // 设置函数
     setInputText,
@@ -182,6 +267,40 @@ export const usePromptGenerator = () => {
     insertTag,
     reset,
     extractStyleFromPrompt,
-    validatePromptInput
+    validatePromptInput,
+    
+    // API管理功能
+    getApiStatus,
+    refreshApiStatus,
+    
+    // 持久化功能
+    loadFromHistory: (id) => {
+      const result = persistentStorage.getGeneratedPromptById(id);
+      if (result) {
+        setInputText(result.inputText);
+        setSelectedStyle(result.selectedStyle || '');
+        setGeneratedPrompt(result.generatedPrompt);
+        return true;
+      }
+      return false;
+    },
+    
+    clearHistory: () => {
+      persistentStorage.clearAllData();
+      setSavedResults([]);
+    },
+    
+    exportHistory: () => {
+      return persistentStorage.exportData();
+    },
+    
+    importHistory: (data) => {
+      const success = persistentStorage.importData(data);
+      if (success) {
+        const history = persistentStorage.getGeneratedPrompts();
+        setSavedResults(history.slice(0, 10));
+      }
+      return success;
+    }
   };
 }; 

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Brain, Copy, CheckCircle, Loader2, Sparkles, AlertCircle, Heart } from 'lucide-react';
+import { Brain, Copy, CheckCircle, Loader2, Sparkles, AlertCircle, Heart, Clock, History } from 'lucide-react';
 import { usePromptGenerator } from '../hooks/usePromptGenerator';
 import { QUICK_TAGS, PAINTING_STYLES } from '../constants/data';
 import { APP_CONFIG } from '../constants/config';
 import { useNotify } from '../components/common/NotificationSystem';
+import GenerationStatusModal from '../components/GenerationStatusModal';
 
 const PromptGeneratorPage = () => {
   const {
@@ -14,14 +15,21 @@ const PromptGeneratorPage = () => {
     generationCount,
     apiError,
     validationErrors,
+    savedResults,
+    currentApiInfo,
     setInputText,
     setSelectedStyle,
     generatePrompt,
     copyPrompt,
-    insertTag
+    insertTag,
+    getApiStatus,
+    refreshApiStatus
   } = usePromptGenerator();
 
   const [showQuickTags, setShowQuickTags] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [generationStatus, setGenerationStatus] = useState('idle');
   const { notifySuccess, notifyError } = useNotify();
 
   const handleCopy = async (text) => {
@@ -34,13 +42,36 @@ const PromptGeneratorPage = () => {
   };
 
   const handleGenerate = async () => {
+    setGenerationStatus('connecting');
+    setShowStatusModal(true);
+    
+    setTimeout(() => {
+      setGenerationStatus('generating');
+    }, 1000);
+
     const success = await generatePrompt();
+    
     if (success) {
+      setGenerationStatus('success');
       notifySuccess('create', '提示词生成');
+      setTimeout(() => {
+        setShowStatusModal(false);
+        setGenerationStatus('idle');
+      }, 2000);
     } else if (validationErrors.length > 0) {
+      setGenerationStatus('error');
       notifyError('validation', '输入验证失败');
+      setTimeout(() => {
+        setShowStatusModal(false);
+        setGenerationStatus('idle');
+      }, 3000);
     } else {
+      setGenerationStatus('error');
       notifyError('create', '生成失败，请稍后重试');
+      setTimeout(() => {
+        setShowStatusModal(false);
+        setGenerationStatus('idle');
+      }, 3000);
     }
   };
 
@@ -59,6 +90,11 @@ const PromptGeneratorPage = () => {
           <span className="text-sm bg-gradient-to-r from-purple-500 to-blue-500 text-white px-3 py-1 rounded-full">
             ✨ 由 DeepSeek-R1 驱动
           </span>
+          {currentApiInfo && (
+            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+              当前API: {currentApiInfo.name}
+            </span>
+          )}
         </div>
       </div>
 
@@ -254,10 +290,15 @@ const PromptGeneratorPage = () => {
                 <span>标签数：{generatedPrompt.split(',').length}</span>
               </div>
               <div className="flex items-center gap-2 text-gray-400">
-                <span>DeepSeek-R1模型</span>
+                <span>{currentApiInfo?.name || 'DeepSeek-R1'}模型</span>
                 {generationCount > 0 && (
                   <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">
                     第{generationCount}次
+                  </span>
+                )}
+                {currentApiInfo && (
+                  <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">
+                    {currentApiInfo.provider}
                   </span>
                 )}
               </div>
@@ -268,10 +309,21 @@ const PromptGeneratorPage = () => {
 
       {/* 使用提示 */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200/50">
-        <h3 className="font-medium text-blue-900 mb-3 flex items-center">
-          <Brain className="mr-2 text-blue-600" size={20} />
-          DeepSeek AI 使用技巧
-          <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Pro Tips</span>
+        <h3 className="font-medium text-blue-900 mb-3 flex items-center justify-between">
+          <div className="flex items-center">
+            <Brain className="mr-2 text-blue-600" size={20} />
+            DeepSeek AI 使用技巧
+            <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Pro Tips</span>
+          </div>
+          <button
+            onClick={() => {
+              const status = getApiStatus();
+              alert(`API状态报告:\n当前API: ${status.currentApi}\n可用API: ${status.availableApis}/${status.totalApis}\n\n详细状态:\n${status.apis.map(api => `${api.name}: ${api.available ? '✅可用' : '❌不可用'}`).join('\n')}`);
+            }}
+            className="text-xs text-blue-600 hover:text-blue-800 underline"
+          >
+            查看API状态
+          </button>
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-800">
           <div className="space-y-2">
@@ -304,6 +356,110 @@ const PromptGeneratorPage = () => {
           </div>
         </div>
       </div>
+
+      {/* 历史记录 */}
+      {savedResults.length > 0 && (
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200/50 p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+              <History className="mr-2 text-gray-600" size={20} />
+              最近生成
+            </h3>
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              className="text-sm text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              {showHistory ? '收起' : `查看全部 (${savedResults.length})`}
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            {(showHistory ? savedResults : savedResults.slice(0, 3)).map((result) => (
+              <div
+                key={result.id}
+                className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors cursor-pointer"
+                onClick={() => {
+                  setInputText(result.inputText);
+                  setSelectedStyle(result.selectedStyle || '');
+                }}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-600 mb-1">
+                      <span className="font-medium">输入：</span>
+                      {result.inputText}
+                    </p>
+                    {result.selectedStyle && (
+                      <p className="text-xs text-purple-600 mb-2">
+                        风格：{result.selectedStyle}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 ml-4">
+                    <span className="text-xs text-gray-500 flex items-center">
+                      <Clock size={12} className="mr-1" />
+                      {new Date(result.timestamp).toLocaleDateString()}
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCopy(result.generatedPrompt);
+                      }}
+                      className="p-1 hover:bg-gray-200 rounded transition-colors"
+                      title="复制"
+                    >
+                      <Copy size={14} className="text-gray-500" />
+                    </button>
+                  </div>
+                </div>
+                <div className="bg-white p-3 rounded border border-gray-200">
+                  <p className="text-xs text-gray-700 font-mono leading-relaxed line-clamp-2">
+                    {result.generatedPrompt}
+                  </p>
+                </div>
+                <div className="mt-2 flex justify-between text-xs text-gray-500">
+                  <span>字符数：{result.metadata?.characterCount || 0}</span>
+                  <span>标签数：{result.metadata?.tagCount || 0}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {!showHistory && savedResults.length > 3 && (
+            <div className="mt-4 text-center">
+              <button
+                onClick={() => setShowHistory(true)}
+                className="text-sm text-purple-600 hover:text-purple-800 transition-colors"
+              >
+                查看更多历史记录 ({savedResults.length - 3} 条)
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 状态模态框 */}
+      <GenerationStatusModal
+        isVisible={showStatusModal}
+        isGenerating={isGenerating}
+        status={generationStatus}
+        onClose={(action) => {
+          if (action === 'showDetails') {
+            // 从后台模式重新显示详情
+            setShowStatusModal(true);
+          } else {
+            // 正常关闭
+            setShowStatusModal(false);
+          }
+        }}
+        statusMessage={
+          generationStatus === 'connecting' ? '正在连接到DeepSeek AI...' :
+          generationStatus === 'generating' ? 'DeepSeek AI正在分析和生成提示词...' :
+          generationStatus === 'success' ? '提示词生成完成！' :
+          generationStatus === 'error' ? (apiError || '生成失败') : ''
+        }
+        estimatedTime={25}
+      />
     </div>
   );
 };

@@ -240,7 +240,10 @@ export const NotificationProvider = ({ children }) => {
       'update': `更新成功${item ? ': ' + item : ''}`,
       'create': `创建成功${item ? ': ' + item : ''}`,
       'upload': `上传成功${item ? ': ' + item : ''}`,
-      'download': `下载成功${item ? ': ' + item : ''}`
+      'download': `下载成功${item ? ': ' + item : ''}`,
+      'clear': `清空成功${item ? ': ' + item : ''}`,
+      'refresh': `刷新成功${item ? ': ' + item : ''}`,
+      'info': item || '操作完成'
     };
     
     return showSuccess(messages[action] || `${action}成功${item ? ': ' + item : ''}`);

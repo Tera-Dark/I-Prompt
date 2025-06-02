@@ -1,5 +1,4 @@
 // PromptLibrary 组件库索引文件
-export { default as TranslatorSettings } from './TranslatorSettings';
 export { default as TagPill } from './TagPill';
 export { default as TagCard } from './TagCard';
 export { default as TutorialModal } from './TutorialModal';

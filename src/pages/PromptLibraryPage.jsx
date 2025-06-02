@@ -7,13 +7,8 @@ import {
   Globe, ArrowRightLeft, Database, BookOpen, Edit3, Tag as TagIcon
 } from 'lucide-react';
 import { copyToClipboard } from '../utils/clipboard';
-import { 
-  translateTag, 
-  getAvailableEngines, 
-  testEngine, 
-  translatePrompt,
-  detectLanguage
-} from '../services/translationService';
+import { useMultiTranslation } from '../hooks/useMultiTranslation';
+import TranslationEngineStatus from '../components/TranslationEngineStatus';
 import { 
   getTagDatabase,
   searchTags,
@@ -21,9 +16,8 @@ import {
 } from '../services/tagDatabaseService';
 
 // 导入拆分的组件
+import TagPill from '../components/PromptLibrary/TagPill';
 import { 
-  TranslatorSettings, 
-  TagPill, 
   TagCard, 
   TutorialModal,
   CategorySidebar,
@@ -36,6 +30,21 @@ import { useNotify } from '../components/common/NotificationSystem';
 const PromptLibraryPage = () => {
   // 使用通知系统
   const { notifySuccess, notifyError, showWarning, showInfo } = useNotify();
+
+  // 使用多引擎翻译系统
+  const {
+    isTranslating: isMultiTranslating,
+    currentEngine,
+    translationError,
+    translate,
+    batchTranslate,
+    switchEngine,
+    getAllEngines,
+    getEngineStatus,
+    refreshEngines,
+    detectLanguage: detectLang,
+    getTranslationStats
+  } = useMultiTranslation();
 
   // 提示词编辑状态
   const [inputPrompt, setInputPrompt] = useState('');
@@ -50,11 +59,7 @@ const PromptLibraryPage = () => {
   const [hoveredTag, setHoveredTag] = useState(null);
   
   // 翻译设置状态
-  const [availableTranslators, setAvailableTranslators] = useState({});
-  const [selectedTranslator, setSelectedTranslator] = useState('baidu_web');
   const [targetLanguage, setTargetLanguage] = useState('en');
-  const [showTranslatorSettings, setShowTranslatorSettings] = useState(false);
-  const [translatorStatus, setTranslatorStatus] = useState({});
   const [autoTranslate, setAutoTranslate] = useState(true);
   
   // 标签库状态
@@ -229,13 +234,7 @@ const PromptLibraryPage = () => {
       console.error('加载自定义库数据失败:', error);
     }
 
-    // 加载翻译引擎状态
-    const loadTranslators = async () => {
-      const engines = getAvailableEngines();
-      setAvailableTranslators(engines);
-    };
 
-    loadTranslators();
   }, []);
 
   // 保存收藏到localStorage
@@ -293,6 +292,34 @@ const PromptLibraryPage = () => {
       return () => clearTimeout(timer);
   }, [inputPrompt, autoTranslate, translationController]);
 
+  // 清理翻译结果的通用函数
+  const cleanTranslationResult = (translatedText) => {
+    if (!translatedText || typeof translatedText !== 'string') {
+      return '';
+    }
+    
+    let cleaned = translatedText.trim();
+    
+    // 移除各种翻译引擎的标记 - 更全面的清理
+    const patterns = [
+      /^\[ALIBABA\]\s*翻译[：:]?\s*/i,
+      /^\[ALIBABA\]\s*Translated[：:]?\s*/i,
+      /^\[.+?\]\s*翻译[：:]?\s*/i,
+      /^\[.+?\]\s*Translated[：:]?\s*/i,
+      /^[^\u4e00-\u9fa5a-zA-Z]*[：:]\s*/,  // 移除非中英文前缀
+      /^翻译[：:]?\s*/,
+      /^Translated[：:]?\s*/i,
+      /^Result[：:]?\s*/i,
+      /^Output[：:]?\s*/i
+    ];
+    
+    patterns.forEach(pattern => {
+      cleaned = cleaned.replace(pattern, '');
+    });
+    
+    return cleaned.trim();
+  };
+
   // 自动翻译处理函数
   const handleAutoTranslation = useCallback(async () => {
     if (!inputPrompt.trim()) return;
@@ -304,28 +331,50 @@ const PromptLibraryPage = () => {
       translationController.start('input', text);
       setUpdateSource('translation'); // 设置更新源为翻译
       
-      const result = await translatePrompt(text, {
-        preferredEngines: [selectedTranslator, 'baidu_web', 'alibaba_web'],
-        targetLang: targetLanguage,
-        sourceLang: inputLanguage === 'auto' ? detectLanguage(text) : inputLanguage
-      });
+      // 检测输入语言
+      const detectedLang = detectLanguage(text);
+      console.log('🔍 [handleAutoTranslation] 检测到语言:', detectedLang);
       
-      const translatedText = result.translatedText || result;
-      console.log('✅ [handleAutoTranslation] 翻译成功:', translatedText);
+      // 根据检测到的语言决定翻译方向
+      let fromLang = detectedLang;
+      let toLang = targetLanguage;
+      
+      // 如果输入是中文，强制翻译到英文（AI绘画标准）
+      if (detectedLang === 'zh') {
+        toLang = 'en';
+        console.log('🎯 [handleAutoTranslation] 中文输入，翻译到英文');
+      }
+      
+      const result = await translate(text, toLang, fromLang);
+      const rawTranslation = result?.translatedText || result || text;
+      
+      console.log('📝 [handleAutoTranslation] 原始翻译结果:', rawTranslation);
+      
+      // 清理翻译结果
+      const cleanedTranslation = cleanTranslationResult(rawTranslation);
+      console.log('✨ [handleAutoTranslation] 清理后结果:', cleanedTranslation);
+      
+      // 如果清理后为空或与原文相同，使用原文
+      const finalText = cleanedTranslation && cleanedTranslation !== text ? cleanedTranslation : text;
       
       // 标准化英文术语
-      const standardizedText = standardizeEnglishTerms(translatedText);
+      const standardizedText = standardizeEnglishTerms(finalText);
       setEnglishPrompt(standardizedText);
       
       // 解析标签
       const newTags = standardizedText.split(/[,，]/)
         .map(tag => tag.trim())
         .filter(tag => tag);
-    setSelectedTags(newTags);
+      setSelectedTags(newTags);
       setDisabledTags(new Set());
       
       translationController.complete(standardizedText);
-      notifySuccess('translate', '提示词翻译');
+      
+      if (cleanedTranslation && cleanedTranslation !== text) {
+        notifySuccess('translate', `翻译成功: ${text} → ${cleanedTranslation}`);
+      } else {
+        notifySuccess('info', '内容已处理，无需翻译');
+      }
       
     } catch (error) {
       console.error('❌ [handleAutoTranslation] 翻译失败:', error);
@@ -341,7 +390,7 @@ const PromptLibraryPage = () => {
       // 清除更新源标记
       setTimeout(() => setUpdateSource(null), 500);
     }
-  }, [inputPrompt, selectedTranslator, targetLanguage, inputLanguage, autoTranslate, translationController, notifySuccess, notifyError]);
+  }, [inputPrompt, targetLanguage, inputLanguage, autoTranslate, translationController, notifySuccess, notifyError]);
 
   // 标准化英文术语
   const standardizeEnglishTerms = (text) => {
@@ -502,31 +551,55 @@ const PromptLibraryPage = () => {
 
   const currentTags = getCurrentTags();
 
+  // 简单的语言检测函数
+  const detectLanguage = (text) => {
+    if (!text || !text.trim()) return 'auto';
+    
+    // 检测中文
+    if (/[\u4e00-\u9fa5]/.test(text)) {
+      return 'zh';
+    }
+    
+    // 检测英文
+    if (/^[a-zA-Z\s\-_\d,，.]+$/.test(text.trim())) {
+      return 'en';
+    }
+    
+    // 其他情况
+    return 'auto';
+  };
+
   // 处理输入提示词变化
   const handleInputPromptChange = (value) => {
+    console.log('📝 [handleInputPromptChange] 输入内容变化:', value);
     setInputPrompt(value);
     
     // 自动检测语言
     const detectedLang = detectLanguage(value);
+    console.log('🔍 [handleInputPromptChange] 检测到语言:', detectedLang);
     setInputLanguage(detectedLang);
     
     // 清空现有标签，让翻译结果来重新填充
     if (value.trim() === '') {
+      console.log('🧹 [handleInputPromptChange] 输入为空，清空所有内容');
       setEnglishPrompt('');
       setSelectedTags([]);
       setDisabledTags(new Set());
       setInputLanguage('auto');
+      return;
     }
 
     // 如果开启自动翻译且内容不为空
     if (autoTranslate && value.trim()) {
+      console.log('⏰ [handleInputPromptChange] 设置延迟翻译');
       // 延迟执行翻译，避免频繁操作
       clearTimeout(window.autoTranslateTimeout);
       window.autoTranslateTimeout = setTimeout(() => {
         if (translationController.shouldTranslate(value)) {
+          console.log('🚀 [handleInputPromptChange] 执行延迟翻译');
           handleAutoTranslation();
         }
-      }, 1000);
+      }, 1200); // 增加延迟时间，避免频繁翻译
     }
   };
 
@@ -857,62 +930,104 @@ const PromptLibraryPage = () => {
     }
   };
 
-  // 复制最终提示词
+  // 复制功能 - 支持多种内容类型
   const handleCopy = async (text) => {
-    const finalPrompt = text || englishPrompt || selectedTags.filter((_, index) => !disabledTags.has(index)).join(', ');
-    if (finalPrompt) {
-      try {
-        await copyToClipboard(finalPrompt);
-        notifySuccess('copy', '提示词');
-      } catch (error) {
-        notifyError('copy', '复制失败');
+    let contentToCopy = '';
+    let contentType = '';
+    
+    if (text && text.trim()) {
+      // 明确指定要复制的内容
+      contentToCopy = text.trim();
+      contentType = '内容';
+    } else if (englishPrompt && englishPrompt.trim()) {
+      // 复制英文输出栏内容
+      contentToCopy = englishPrompt.trim();
+      contentType = '英文提示词';
+    } else if (selectedTags.length > 0) {
+      // 复制当前启用的标签
+      const enabledTags = selectedTags.filter((_, index) => !disabledTags.has(index));
+      if (enabledTags.length > 0) {
+        contentToCopy = enabledTags.join(', ');
+        contentType = `${enabledTags.length}个标签`;
       }
+    }
+    
+    if (contentToCopy) {
+      try {
+        console.log('📋 [handleCopy] 复制内容:', contentToCopy);
+        await copyToClipboard(contentToCopy);
+        notifySuccess('copy', `${contentType}已复制到剪贴板`);
+      } catch (error) {
+        console.error('❌ [handleCopy] 复制失败:', error);
+        notifyError('copy', '复制失败，请重试');
+      }
+    } else {
+      console.log('⚠️ [handleCopy] 没有内容可复制');
+      notifyError('copy', '没有内容可复制');
     }
   };
 
   // 翻译单个标签
-  const translateSingleTag = async (tag) => {
+  const translateSingleTag = async (text) => {
     try {
-      // 解析标签获取纯文本
-      const { text } = parseTag(tag);
-      const result = await translateTag(text, targetLanguage);
-      if (result && result.translatedText) {
+      // 如果是标签对象，解析获取纯文本；如果已经是文本，直接使用
+      const tagText = typeof text === 'string' ? text : parseTag(text).text;
+      
+      // 检查是否为英文标签，只翻译英文标签
+      if (!/^[a-zA-Z\s\-_\d]+$/.test(tagText)) {
+        console.log(`⚠️ [translateSingleTag] 跳过非英文标签: "${tagText}"`);
+        return null;
+      }
+      
+      console.log(`🌐 [translateSingleTag] 开始翻译英文标签: "${tagText}"`);
+      
+      const result = await translate(tagText, 'zh', 'en'); // 明确指定英文到中文
+      const rawTranslation = result?.translatedText || result;
+      
+      if (rawTranslation) {
+        console.log(`📝 [translateSingleTag] 原始翻译结果: "${rawTranslation}"`);
+        
+        // 使用统一的清理函数
+        const cleanTranslation = cleanTranslationResult(rawTranslation);
+        console.log(`✨ [translateSingleTag] 清理后结果: "${cleanTranslation}"`);
+        
+        // 如果清理后为空或与原文相同，返回null
+        if (!cleanTranslation || cleanTranslation === tagText) {
+          console.log(`⚠️ [translateSingleTag] 翻译结果无效或未变化`);
+          return null;
+        }
+        
+        // 检查是否为合理的中文翻译
+        if (!/[\u4e00-\u9fa5]/.test(cleanTranslation)) {
+          console.log(`⚠️ [translateSingleTag] 翻译结果不包含中文: "${cleanTranslation}"`);
+          return null;
+        }
+        
         setTranslatedTags(prev => ({
           ...prev,
-          [text]: result.translatedText  // 提取翻译文本
+          [tagText]: cleanTranslation
         }));
-        notifySuccess('translate', `${text} -> ${result.translatedText}`);
+        
+        console.log(`✅ [translateSingleTag] 翻译成功: ${tagText} -> ${cleanTranslation}`);
+        notifySuccess('translate', `${tagText} → ${cleanTranslation}`);
+        
+        // 返回清理后的结果
+        return { 
+          ...result, 
+          translatedText: cleanTranslation 
+        };
       } else {
-        notifyError('translate', '翻译服务暂时不可用', text);
+        console.log(`❌ [translateSingleTag] 翻译返回空结果`);
+        return null;
       }
     } catch (error) {
-      console.error('翻译失败:', error);
-      notifyError('translate', error.message || '翻译失败', tag);
+      console.error('❌ [translateSingleTag] 翻译失败:', error);
+      notifyError('translate', error.message || '翻译失败', text);
+      return null;
     }
   };
 
-  // 测试翻译引擎
-  const handleTestTranslator = async (translatorKey) => {
-    setTranslatorStatus(prev => ({ ...prev, [translatorKey]: 'testing' }));
-    try {
-      const result = await testEngine(translatorKey);
-      const isAvailable = result && result.status === 'available';
-      setTranslatorStatus(prev => ({ 
-        ...prev, 
-        [translatorKey]: isAvailable ? 'available' : 'unavailable' 
-      }));
-      
-      if (isAvailable) {
-        notifySuccess('test', `引擎 ${translatorKey} 测试成功`);
-      } else {
-        notifyError('test', `引擎 ${translatorKey} 测试失败`);
-      }
-    } catch (error) {
-      console.error('引擎测试失败:', error);
-      setTranslatorStatus(prev => ({ ...prev, [translatorKey]: 'unavailable' }));
-      notifyError('test', error.message || `引擎 ${translatorKey} 测试失败`);
-    }
-  };
+
 
   // 切换分类
   const toggleCategory = (categoryKey) => {
@@ -942,6 +1057,7 @@ const PromptLibraryPage = () => {
     const newTranslations = {};
     let translatedCount = 0;
     let skippedCount = 0;
+    let nonEnglishCount = 0;
 
     for (const tag of selectedTags) {
       // 解析标签获取纯文本
@@ -954,25 +1070,42 @@ const PromptLibraryPage = () => {
         continue;
       }
 
-      // 使用在线翻译引擎翻译（仅英文标签）
-      if (/^[a-zA-Z\s\-_\d]+$/.test(text)) {
-        try {
-          await new Promise(resolve => setTimeout(resolve, 200)); // 防止频率限制
-          console.log(`🌐 [translateAllTags] 开始在线翻译: "${text}"`);
-          
-          const result = await translateTag(text, 'zh');
-          if (result && result.translatedText) {
-            newTranslations[text] = result.translatedText;
-            translatedCount++;
-            console.log('✅ [translateAllTags] 在线翻译成功:', text, '->', result.translatedText);
-          } else {
-            console.log('⚠️ [translateAllTags] 翻译返回空结果:', text);
-          }
-        } catch (error) {
-          console.error('❌ [translateAllTags] 翻译失败:', text, error.message);
-        }
-      } else {
+      // 检查是否为英文标签
+      if (!/^[a-zA-Z\s\-_\d]+$/.test(text)) {
         console.log('⚠️ [translateAllTags] 跳过非英文标签:', text);
+        nonEnglishCount++;
+        continue;
+      }
+
+      try {
+        await new Promise(resolve => setTimeout(resolve, 300)); // 防止频率限制
+        console.log(`🌐 [translateAllTags] 开始翻译: "${text}"`);
+        
+        const result = await translate(text, 'zh', 'en'); // 明确指定英文到中文
+        const rawTranslation = result?.translatedText || result;
+        
+        if (rawTranslation) {
+          console.log(`📝 [translateAllTags] 原始翻译结果: "${rawTranslation}"`);
+          
+          // 使用统一的清理函数
+          const cleanTranslation = cleanTranslationResult(rawTranslation);
+          console.log(`✨ [translateAllTags] 清理后结果: "${cleanTranslation}"`);
+          
+          // 验证翻译质量
+          if (cleanTranslation && 
+              cleanTranslation !== text && 
+              /[\u4e00-\u9fa5]/.test(cleanTranslation)) {
+            newTranslations[text] = cleanTranslation;
+            translatedCount++;
+            console.log('✅ [translateAllTags] 翻译成功:', text, '→', cleanTranslation);
+          } else {
+            console.log('⚠️ [translateAllTags] 翻译结果质量不合格:', text, '→', cleanTranslation);
+          }
+        } else {
+          console.log('⚠️ [translateAllTags] 翻译返回空结果:', text);
+        }
+      } catch (error) {
+        console.error('❌ [translateAllTags] 翻译失败:', text, error.message);
       }
     }
 
@@ -985,16 +1118,26 @@ const PromptLibraryPage = () => {
     }
 
     // 显示结果
+    let message = '';
     if (translatedCount > 0) {
-      notifySuccess('translate', `成功翻译 ${translatedCount} 个标签`);
+      message += `成功翻译 ${translatedCount} 个标签`;
+      notifySuccess('translate', message);
     }
     
     if (skippedCount > 0) {
       showInfo(`跳过 ${skippedCount} 个已翻译的标签`);
     }
 
-    if (translatedCount === 0 && skippedCount === 0) {
-      showWarning('没有找到可翻译的英文标签');
+    if (nonEnglishCount > 0) {
+      showInfo(`跳过 ${nonEnglishCount} 个非英文标签`);
+    }
+
+    if (translatedCount === 0) {
+      if (skippedCount > 0) {
+        showInfo('所有英文标签都已翻译');
+      } else {
+        showWarning('没有找到可翻译的英文标签');
+      }
     }
 
     console.log('✅ [translateAllTags] 翻译完成，新增翻译:', newTranslations);
@@ -1323,20 +1466,29 @@ const PromptLibraryPage = () => {
                   自动翻译
                 </label>
                 <button
-                  onClick={() => handleCopy(inputPrompt)}
-                  className="flex items-center gap-1 px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs"
+                  onClick={() => {
+                    console.log('📋 [智能输入区复制] 复制内容:', inputPrompt);
+                    handleCopy(inputPrompt);
+                  }}
+                  disabled={!inputPrompt.trim()}
+                  className="flex items-center gap-1 px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Copy size={12} />
                   复制
                 </button>
                 <button
                   onClick={() => {
+                    console.log('🧹 [智能输入区清空] 清空输入内容');
                     setInputPrompt('');
                     setEnglishPrompt('');
                     setSelectedTags([]);
                     setDisabledTags(new Set());
+                    setInputLanguage('auto');
+                    notifySuccess('clear', '已清空输入内容');
                   }}
-                  className="p-1 text-gray-500 hover:bg-gray-100 rounded transition-colors"
+                  disabled={!inputPrompt.trim()}
+                  className="p-1 text-gray-500 hover:bg-gray-100 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="清空输入"
                 >
                   <X size={14} />
                 </button>
@@ -1419,29 +1571,14 @@ const PromptLibraryPage = () => {
                     <option value="ru">🇷🇺</option>
                   </select>
                   
-                    <button
-                    onClick={() => setShowTranslatorSettings(!showTranslatorSettings)}
-                    className="p-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                    title="翻译引擎设置"
-                  >
-                    <Settings size={14} />
-                    </button>
-                  <button
-                    onClick={() => {
-                      if (inputPrompt.trim() && translationController.shouldTranslate(inputPrompt)) {
-                        handleAutoTranslation();
-                      }
-                    }}
-                    disabled={isTranslatingPrompt || !inputPrompt.trim()}
-                    className="flex items-center gap-1 px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isTranslatingPrompt ? (
-                      <RefreshCw size={12} className="animate-spin" />
-                    ) : (
-                      <ArrowRightLeft size={12} />
-                    )}
-                    翻译
-                  </button>
+                    {/* 多引擎翻译状态组件 */}
+                  <TranslationEngineStatus
+                    currentEngine={currentEngine}
+                    allEngines={getAllEngines()}
+                    onEngineSwitch={switchEngine}
+                    onRefresh={refreshEngines}
+                    stats={getTranslationStats()}
+                  />
                   <button
                     onClick={() => handleCopy(englishPrompt)}
                     disabled={!englishPrompt.trim()}
@@ -1495,7 +1632,7 @@ const PromptLibraryPage = () => {
         </div>
 
         {/* 提示词编辑区 - 单独一行，自适应高度 */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 prompt-edit-area">
           <div className="p-4">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-md font-semibold text-gray-900 flex items-center">
@@ -1510,14 +1647,30 @@ const PromptLibraryPage = () => {
               </h2>
               <div className="flex items-center gap-2">
                 <button
+                  onClick={translateAllTags}
+                  disabled={selectedTags.length === 0 || isMultiTranslating}
+                  className="flex items-center gap-1 px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isMultiTranslating ? (
+                    <RefreshCw size={12} className="animate-spin" />
+                  ) : (
+                    <Globe size={12} />
+                  )}
+                  翻译全部
+                </button>
+                <button
                   onClick={() => {
+                    console.log('🧹 [清空按钮] 清空所有内容');
                     setSelectedTags([]);
                     setEnglishPrompt('');
                     setInputPrompt('');
                     setTranslatedTags({});
                     setDisabledTags(new Set());
+                    setInputLanguage('auto');
+                    notifySuccess('clear', '已清空所有内容');
                   }}
-                  className="flex items-center gap-1 px-2 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-xs"
+                  disabled={selectedTags.length === 0 && !englishPrompt.trim() && !inputPrompt.trim()}
+                  className="flex items-center gap-1 px-2 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <X size={12} />
                   清空
@@ -1555,10 +1708,8 @@ const PromptLibraryPage = () => {
             <div 
               className="border border-gray-300 rounded-lg p-4 bg-blue-50/20 relative"
               style={{
-                minHeight: '160px',
-                maxHeight: '800px',
-                height: 'auto',
-                overflow: 'visible'
+                minHeight: '200px',
+                height: 'auto'
               }}
             >
               {selectedTags.length === 0 ? (
@@ -1588,7 +1739,12 @@ const PromptLibraryPage = () => {
                   </div>
                   
                   {/* 标签编辑区域 */}
-                <div className="flex flex-wrap gap-3">
+                <div 
+                  className="flex flex-wrap gap-3"
+                  style={{
+                    paddingBottom: '20px'
+                  }}
+                >
                     {selectedTags.map((tag, index) => {
                       // 检查当前标签是否已收藏
                       const tagText = typeof tag === 'string' ? tag : tag.en;
@@ -1762,19 +1918,7 @@ const PromptLibraryPage = () => {
           </div>
         </div>
 
-      {/* 翻译设置模态框 */}
-      {showTranslatorSettings && (
-        <TranslatorSettings
-          availableTranslators={availableTranslators}
-          selectedTranslator={selectedTranslator}
-          setSelectedTranslator={setSelectedTranslator}
-          targetLanguage={targetLanguage}
-          setTargetLanguage={setTargetLanguage}
-          translatorStatus={translatorStatus}
-          onTestTranslator={handleTestTranslator}
-          onClose={() => setShowTranslatorSettings(false)}
-        />
-      )}
+
 
       {/* 教程模态框 */}
       {showTutorial && (
