@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { validateInput, cleanPrompt } from '../utils/validation';
 import { copyToClipboard } from '../utils/clipboard';
-import { APP_CONFIG, ERROR_MESSAGES } from '../constants/config';
+import { APP_CONFIG, ERROR_MESSAGES, API_CONFIG } from '../constants/config';
 import { persistentStorage } from '../utils/persistentStorage';
 import apiManager from '../services/apiManager';
 
@@ -12,6 +12,7 @@ export const usePromptGenerator = () => {
   const [inputText, setInputText] = useState('');
   const [generatedPrompt, setGeneratedPrompt] = useState('');
   const [selectedStyle, setSelectedStyle] = useState('');
+  const [selectedModel, setSelectedModel] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationCount, setGenerationCount] = useState(0);
   const [apiError, setApiError] = useState(null);
@@ -20,6 +21,28 @@ export const usePromptGenerator = () => {
   const [savedResults, setSavedResults] = useState([]);
   const [currentApiInfo, setCurrentApiInfo] = useState(null);
 
+  // 获取可用模型列表
+  const getAvailableModels = useCallback(() => {
+    return API_CONFIG.APIS.map(api => ({
+      id: api.name,
+      name: api.name,
+      description: api.description || api.model,
+      provider: api.provider,
+      model: api.model,
+      available: api.available
+    }));
+  }, []);
+
+  // 根据选择的模型切换API
+  const switchToModel = useCallback((modelId) => {
+    const targetApi = API_CONFIG.APIS.find(api => api.name === modelId);
+    if (targetApi) {
+      apiManager.setPreferredApi(targetApi);
+      setCurrentApiInfo(targetApi);
+      console.log(`🔄 [Hook] 切换到模型: ${targetApi.name} (${targetApi.model})`);
+    }
+  }, []);
+
   // 初始化时恢复数据
   useEffect(() => {
     // 恢复草稿内容
@@ -27,6 +50,7 @@ export const usePromptGenerator = () => {
     if (draft) {
       setInputText(draft.inputText || '');
       setSelectedStyle(draft.selectedStyle || '');
+      setSelectedModel(draft.selectedModel || '');
       console.log('✅ 恢复草稿内容');
     }
 
@@ -37,26 +61,37 @@ export const usePromptGenerator = () => {
     // 监听API切换事件
     apiManager.onApiSwitch = (newApi, oldApi) => {
       setCurrentApiInfo(newApi);
+      setSelectedModel(newApi.name);
       console.log(`🔄 [Hook] API已切换: ${oldApi} -> ${newApi.name}`);
     };
 
     // 设置初始API信息
-    setCurrentApiInfo(apiManager.getCurrentApi());
+    const currentApi = apiManager.getCurrentApi();
+    setCurrentApiInfo(currentApi);
+    setSelectedModel(currentApi?.name || '');
   }, []);
 
   // 自动保存草稿
   useEffect(() => {
-    if (inputText || selectedStyle) {
+    if (inputText || selectedStyle || selectedModel) {
       const timer = setTimeout(() => {
         persistentStorage.saveDraftContent({
           inputText,
-          selectedStyle
+          selectedStyle,
+          selectedModel
         });
       }, 2000); // 2秒后自动保存
 
       return () => clearTimeout(timer);
     }
-  }, [inputText, selectedStyle]);
+  }, [inputText, selectedStyle, selectedModel]);
+
+  // 监听模型选择变化
+  useEffect(() => {
+    if (selectedModel && selectedModel !== currentApiInfo?.name) {
+      switchToModel(selectedModel);
+    }
+  }, [selectedModel, currentApiInfo, switchToModel]);
 
   /**
    * 验证输入
@@ -248,6 +283,7 @@ export const usePromptGenerator = () => {
     inputText,
     generatedPrompt,
     selectedStyle,
+    selectedModel,
     isGenerating,
     generationCount,
     apiError,
@@ -259,6 +295,7 @@ export const usePromptGenerator = () => {
     // 设置函数
     setInputText,
     setSelectedStyle,
+    setSelectedModel,
     setGeneratedPrompt,
     
     // 操作函数
@@ -279,6 +316,7 @@ export const usePromptGenerator = () => {
       if (result) {
         setInputText(result.inputText);
         setSelectedStyle(result.selectedStyle || '');
+        setSelectedModel(result.selectedModel || '');
         setGeneratedPrompt(result.generatedPrompt);
         return true;
       }
@@ -301,6 +339,10 @@ export const usePromptGenerator = () => {
         setSavedResults(history.slice(0, 10));
       }
       return success;
-    }
+    },
+
+    // 新增功能
+    getAvailableModels,
+    switchToModel
   };
 }; 

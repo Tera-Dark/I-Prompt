@@ -330,6 +330,23 @@ class ApiManager {
 
     return report;
   }
+
+  /**
+   * 手动设置首选API
+   */
+  setPreferredApi(targetApi) {
+    const foundApi = this.apis.find(api => api.name === targetApi.name);
+    if (foundApi) {
+      const oldApi = this.currentApi?.name || 'None';
+      this.currentApi = foundApi;
+      console.log(`🎯 [ApiManager] 手动切换API: ${oldApi} -> ${foundApi.name}`);
+      
+      // 触发切换事件
+      this.onApiSwitch?.(foundApi, oldApi);
+      return true;
+    }
+    return false;
+  }
 }
 
 // 创建全局单例

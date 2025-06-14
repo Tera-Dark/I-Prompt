@@ -1403,572 +1403,523 @@ const PromptLibraryPage = () => {
   }, [notifySuccess, notifyError]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      {/* 页面标题 */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 px-6 py-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2 flex items-center">
-                <Sparkles className="text-blue-600 mr-2" size={28} />
-            智能提示词库 3.0
-          </h1>
-              <p className="text-gray-600 text-sm">
-                AI绘画提示词编辑管理工具，支持中英文智能输入、多引擎翻译
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="text-right">
-                <div className="text-xs text-gray-500">当前模式</div>
-                <div className="text-sm font-semibold text-blue-600">内测版本</div>
+    <>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        {/* 页面标题 */}
+        <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 px-6 py-4">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 mb-2 flex items-center">
+                  <Sparkles className="text-blue-600 mr-2" size={28} />
+                  智能提示词库 3.0
+                </h1>
+                <p className="text-gray-600 text-sm">
+                  AI绘画提示词编辑管理工具，支持中英文智能输入、多引擎翻译
+                </p>
               </div>
-              <button
-                onClick={() => setShowTutorial(true)}
-                className="flex items-center gap-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
-                title="查看使用教程"
-              >
-                <BookOpen size={16} />
-                使用教程
-              </button>
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <Sparkles className="text-white" size={20} />
+              <div className="flex items-center gap-2">
+                <div className="text-right">
+                  <div className="text-xs text-gray-500">当前模式</div>
+                  <div className="text-sm font-semibold text-blue-600">内测版本</div>
+                </div>
+                <button
+                  onClick={() => setShowTutorial(true)}
+                  className="flex items-center gap-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                  title="查看使用教程"
+                >
+                  <BookOpen size={16} />
+                  使用教程
+                </button>
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                  <Sparkles className="text-white" size={20} />
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
-        {/* 提示词预览和翻译区 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* 智能输入区 - 支持中英文 */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200">
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-md font-semibold text-gray-900 flex items-center">
-                  <Globe className="text-blue-600 mr-2" size={18} />
-                  智能输入
-                  <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full ml-2">
-                    中英文自动检测
-                  </span>
-              </h2>
-              <div className="flex items-center gap-2">
-                <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
-                  {inputLanguage === 'zh' ? '🇨🇳' : inputLanguage === 'en' ? '🇺🇸' : '🌐'}
+        <div className="max-w-7xl mx-auto p-6 space-y-6">
+          {/* 提示词预览和翻译区 */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* 智能输入区 */}
+            <div className="bg-white rounded-xl shadow-lg border border-gray-200">
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Globe className="text-blue-600" size={16} />
+                    <span className="text-sm font-medium text-gray-900">智能输入</span>
+                    <div className="text-xs text-gray-500 bg-gray-50 px-2 py-0.5 rounded">
+                      {inputLanguage === 'zh' ? '🇨🇳' : inputLanguage === 'en' ? '🇺🇸' : '🌐'}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <label className="flex items-center text-xs text-gray-600" title="自动翻译">
+                      <input
+                        type="checkbox"
+                        checked={autoTranslate}
+                        onChange={(e) => setAutoTranslate(e.target.checked)}
+                        className="w-3 h-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <Languages size={12} className="ml-1" />
+                    </label>
+                    <button
+                      onClick={() => handleCopy(inputPrompt)}
+                      disabled={!inputPrompt.trim()}
+                      className="p-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
+                      title="复制"
+                    >
+                      <Copy size={12} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setInputPrompt('');
+                        setEnglishPrompt('');
+                        setSelectedTags([]);
+                        setDisabledTags(new Set());
+                        setInputLanguage('auto');
+                        notifySuccess('clear', '已清空');
+                      }}
+                      disabled={!inputPrompt.trim()}
+                      className="p-1.5 text-gray-500 hover:bg-gray-100 rounded transition-colors disabled:opacity-50"
+                      title="清空"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
                 </div>
-                <label className="flex items-center gap-1 text-xs text-gray-600">
-                  <input
-                    type="checkbox"
-                    checked={autoTranslate}
-                    onChange={(e) => setAutoTranslate(e.target.checked)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  自动翻译
-                </label>
-                <button
-                  onClick={() => {
-                    console.log('📋 [智能输入区复制] 复制内容:', inputPrompt);
-                    handleCopy(inputPrompt);
-                  }}
-                  disabled={!inputPrompt.trim()}
-                  className="flex items-center gap-1 px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Copy size={12} />
-                  复制
-                </button>
-                <button
-                  onClick={() => {
-                    console.log('🧹 [智能输入区清空] 清空输入内容');
-                    setInputPrompt('');
-                    setEnglishPrompt('');
-                    setSelectedTags([]);
-                    setDisabledTags(new Set());
-                    setInputLanguage('auto');
-                    notifySuccess('clear', '已清空输入内容');
-                  }}
-                  disabled={!inputPrompt.trim()}
-                  className="p-1 text-gray-500 hover:bg-gray-100 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="清空输入"
-                >
-                  <X size={14} />
-                </button>
+
+                {/* 快速测试 */}
+                <div className="mb-3 flex gap-1">
+                  {[
+                    { text: 'beautiful girl, anime style', icon: '👧', title: '基础' },
+                    { text: 'masterpiece, best quality, ultra detailed', icon: '✨', title: '质量' },
+                    { text: 'blue eyes, long hair, smile', icon: '👁️', title: '特征' },
+                    { text: 'forest, sunset, cinematic lighting', icon: '🌅', title: '场景' }
+                  ].map((preset, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        setInputPrompt(preset.text);
+                        handleInputPromptChange(preset.text);
+                      }}
+                      className="px-2 py-1 text-xs bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition-colors"
+                      title={preset.title}
+                    >
+                      {preset.icon}
+                    </button>
+                  ))}
+                </div>
+
+                <textarea
+                  ref={textareaRef}
+                  value={inputPrompt}
+                  onChange={(e) => handleInputPromptChange(e.target.value)}
+                  placeholder="支持中英文输入，如：美丽的女孩, beautiful girl..."
+                  className="w-full h-24 p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+                />
+                
+                <div className="flex items-center justify-between text-xs text-gray-400 mt-2">
+                  <span>{inputPrompt.length}</span>
+                  <span className="text-xs">
+                    {inputLanguage === 'zh' ? '🇨🇳' : inputLanguage === 'en' ? '🇺🇸' : '🌐'}
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* 快速测试按钮 */}
-            <div className="mb-3 flex flex-wrap gap-2">
-              <span className="text-xs text-gray-500 mr-2">快速测试:</span>
-              {[
-                { text: 'beautiful girl, anime style', label: '基础' },
-                { text: 'masterpiece, best quality, ultra detailed', label: '质量' },
-                { text: 'blue eyes, long hair, smile', label: '特征' },
-                { text: 'forest, sunset, cinematic lighting', label: '场景' }
-              ].map((preset, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    setInputPrompt(preset.text);
-                    handleInputPromptChange(preset.text);
-                  }}
-                  className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
-                >
-                  {preset.label}
-                </button>
-              ))}
-            </div>
-
-            <textarea
-              ref={textareaRef}
-              value={inputPrompt}
-              onChange={(e) => handleInputPromptChange(e.target.value)}
-                placeholder="支持中英文输入，如：美丽的女孩, beautiful girl..."
-              className="w-full h-28 p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm overflow-y-auto"
-            />
-            
-            <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
-              <span>{inputPrompt.length} 字符</span>
-              <span>{inputLanguage === 'zh' ? '中文' : inputLanguage === 'en' ? '英文' : '未检测'}</span>
-            </div>
+            {/* 英文输出区 */}  
+            <div className="bg-white rounded-xl shadow-lg border border-gray-200">
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <ArrowRightLeft className="text-green-600" size={16} />
+                    <span className="text-sm font-medium text-gray-900">输出</span>
+                    <div className="text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded">
+                      AI标准
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <select
+                      value={targetLanguage}
+                      onChange={(e) => setTargetLanguage(e.target.value)}
+                      className="text-xs bg-gray-50 border border-gray-300 rounded px-1.5 py-0.5 focus:ring-1 focus:ring-blue-500"
+                      title="选择语言"
+                    >
+                      <option value="en">🇺🇸</option>
+                      <option value="zh">🇨🇳</option>
+                      <option value="ja">🇯🇵</option>
+                      <option value="ko">🇰🇷</option>
+                    </select>
+                    
+                    {/* 翻译引擎状态 */}
+                    <div className="text-xs bg-gray-50 px-2 py-0.5 rounded flex items-center gap-1" title={`当前引擎: ${currentEngine?.name || '未知'}`}>
+                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                      <span className="text-gray-600">{currentEngine?.name?.slice(0, 2) || 'N/A'}</span>
+                    </div>
+                    
+                    <button
+                      onClick={() => handleCopy(englishPrompt)}
+                      disabled={!englishPrompt.trim()}
+                      className="p-1.5 bg-green-600 text-white rounded hover:bg-green-700 transition-colors disabled:opacity-50"
+                      title="复制"
+                    >
+                      <Copy size={12} />
+                    </button>
+                  </div>
                 </div>
+
+                <div className="relative">
+                  <textarea
+                    value={englishPrompt}
+                    onChange={(e) => handleEnglishPromptChange(e.target.value)}
+                    placeholder={isTranslatingPrompt ? "翻译中..." : "请先在左侧输入提示词..."}
+                    className="w-full h-24 p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm"
+                  />
+                  {isTranslatingPrompt && (
+                    <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                      <RefreshCw size={14} className="animate-spin text-blue-600" />
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex items-center justify-between text-xs text-gray-400 mt-2">
+                  <span>{englishPrompt.length}</span>
+                  <span>AI标准</span>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* 英文输出区 */}
-          <div className="bg-white rounded-xl shadow-lg border border-gray-200">
+          {/* 提示词编辑区 - 单独一行，自适应高度 */}
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 prompt-edit-area">
             <div className="p-4">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-md font-semibold text-gray-900 flex items-center">
-                  <ArrowRightLeft className="text-green-600 mr-2" size={18} />
-                  {(() => {
-                    const languageNames = {
-                      'en': '英文输出',
-                      'zh': '中文输出', 
-                      'ja': '日文输出',
-                      'ko': '韩文输出',
-                      'fr': '法文输出',
-                      'de': '德文输出',
-                      'es': '西班牙文输出',
-                      'ru': '俄文输出'
-                    };
-                    return languageNames[targetLanguage] || `${targetLanguage.toUpperCase()}输出`;
-                  })()}
+                  <Edit3 className="text-blue-600 mr-2" size={18} />
+                  提示词编辑器
+                  <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full ml-2">
+                    悬停编辑 · 权重调节 · 智能翻译
+                  </span>
                   <span className="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full ml-2">
-                    AI绘画标准
+                    ({selectedTags.filter((_, i) => !disabledTags.has(i)).length}/{selectedTags.length})
                   </span>
                 </h2>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <select
-                    value={targetLanguage}
-                    onChange={(e) => setTargetLanguage(e.target.value)}
-                    className="text-xs bg-gray-50 border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="en">🇺🇸</option>
-                    <option value="zh">🇨🇳</option>
-                    <option value="ja">🇯🇵</option>
-                    <option value="ko">🇰🇷</option>
-                    <option value="fr">🇫🇷</option>
-                    <option value="de">🇩🇪</option>
-                    <option value="es">🇪🇸</option>
-                    <option value="ru">🇷🇺</option>
-                  </select>
-                  
-                    {/* 多引擎翻译状态组件 */}
-                  <TranslationEngineStatus
-                    currentEngine={currentEngine}
-                    allEngines={getAllEngines()}
-                    onEngineSwitch={switchEngine}
-                    onRefresh={refreshEngines}
-                    stats={getTranslationStats()}
-                  />
+                <div className="flex items-center gap-2">
                   <button
-                    onClick={() => handleCopy(englishPrompt)}
-                    disabled={!englishPrompt.trim()}
-                    className="flex items-center gap-1 px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={translateAllTags}
+                    disabled={selectedTags.length === 0 || isMultiTranslating}
+                    className="flex items-center gap-1 px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Copy size={12} />
-                    复制
+                    {isMultiTranslating ? (
+                      <RefreshCw size={12} className="animate-spin" />
+                    ) : (
+                      <Globe size={12} />
+                    )}
+                    翻译全部
+                  </button>
+                  <button
+                    onClick={() => {
+                      console.log('🧹 [清空按钮] 清空所有内容');
+                      setSelectedTags([]);
+                      setEnglishPrompt('');
+                      setInputPrompt('');
+                      setTranslatedTags({});
+                      setDisabledTags(new Set());
+                      setInputLanguage('auto');
+                      notifySuccess('clear', '已清空所有内容');
+                    }}
+                    disabled={selectedTags.length === 0 && !englishPrompt.trim() && !inputPrompt.trim()}
+                    className="flex items-center gap-1 px-2 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <X size={12} />
+                    清空
                   </button>
                 </div>
               </div>
 
-              <div className="relative">
-                <textarea
-                  value={englishPrompt}
-                  onChange={(e) => handleEnglishPromptChange(e.target.value)}
-                  placeholder={(() => {
-                    if (isTranslatingPrompt) return "正在智能翻译中，请稍候...";
-                    if (inputPrompt.trim()) {
-                      const languageNames = {
-                        'en': '英文',
-                        'zh': '中文', 
-                        'ja': '日文',
-                        'ko': '韩文',
-                        'fr': '法文',
-                        'de': '德文',
-                        'es': '西班牙文',
-                        'ru': '俄文'
-                      };
-                      return `将自动翻译为${languageNames[targetLanguage] || targetLanguage}...`;
-                    }
-                    return "请先在左侧输入提示词，或直接在此输入英文标签...";
-                  })()}
-                  className="w-full h-28 p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-sm overflow-y-auto"
-                />
-                {isTranslatingPrompt && (
-                  <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
-                    <div className="flex items-center gap-2 text-blue-600">
-                      <RefreshCw size={16} className="animate-spin" />
-                      <span className="text-sm">智能翻译中...</span>
-                </div>
-              </div>
-            )}
-              </div>
-              
-              <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
-                <span>{englishPrompt.length} 字符</span>
-                <span>AI绘画标准格式 · 支持手动编辑</span>
-                </div>
-              </div>
-          </div>
-        </div>
-
-        {/* 提示词编辑区 - 单独一行，自适应高度 */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 prompt-edit-area">
-          <div className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-md font-semibold text-gray-900 flex items-center">
-                <Edit3 className="text-blue-600 mr-2" size={18} />
-                提示词编辑器
-                <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full ml-2">
-                  悬停编辑 · 权重调节 · 智能翻译
-                </span>
-                <span className="text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full ml-2">
-                  ({selectedTags.filter((_, i) => !disabledTags.has(i)).length}/{selectedTags.length})
-                </span>
-              </h2>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={translateAllTags}
-                  disabled={selectedTags.length === 0 || isMultiTranslating}
-                  className="flex items-center gap-1 px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isMultiTranslating ? (
-                    <RefreshCw size={12} className="animate-spin" />
-                  ) : (
-                    <Globe size={12} />
-                  )}
-                  翻译全部
-                </button>
-                <button
-                  onClick={() => {
-                    console.log('🧹 [清空按钮] 清空所有内容');
-                    setSelectedTags([]);
-                    setEnglishPrompt('');
-                    setInputPrompt('');
-                    setTranslatedTags({});
-                    setDisabledTags(new Set());
-                    setInputLanguage('auto');
-                    notifySuccess('clear', '已清空所有内容');
-                  }}
-                  disabled={selectedTags.length === 0 && !englishPrompt.trim() && !inputPrompt.trim()}
-                  className="flex items-center gap-1 px-2 py-1 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <X size={12} />
-                  清空
-                </button>
-              </div>
-            </div>
-
-            {/* 翻译功能说明 */}
-            {selectedTags.length > 0 && (
-              <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-blue-800">
-                    <Languages className="text-blue-600" size={16} />
-                    <span className="font-medium">智能翻译已启用</span>
-                    <span className="text-blue-600">
-                      • 标签下方会自动显示中文翻译 
-                      • 支持本地词典和在线翻译
-                      • 点击"翻译全部"获取所有标签翻译
-                    </span>
-                  </div>
-                  <div className="text-xs text-blue-600 bg-white px-2 py-1 rounded border">
-                    {(() => {
-                      const totalTags = selectedTags.length;
-                      const translatedCount = selectedTags.filter(tag => {
-                        const { text } = parseTag(tag);
-                        return translatedTags[text]; // 只检查翻译缓存，不再使用假翻译
-                      }).length;
-                      return `${translatedCount}/${totalTags} 已翻译`;
-                    })()}
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            <div 
-              className="border border-gray-300 rounded-lg p-4 bg-blue-50/20 relative"
-              style={{
-                minHeight: '200px',
-                height: 'auto'
-              }}
-            >
-              {selectedTags.length === 0 ? (
-                <div className="flex items-center justify-center h-24 text-gray-500">
-                  <div className="text-center">
-                    <TagIcon size={24} className="mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">点击下方标签库添加标签</p>
-                    <p className="text-xs text-gray-400 mt-1">或在上方输入区直接输入提示词</p>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {/* 标签预览区域 - 类似英文输出区格式 */}
-                  <div className="mb-4">
-                    <textarea
-                      value={selectedTags.filter((_, index) => !disabledTags.has(index)).join(', ')}
-                      readOnly
-                      className="w-full h-20 p-3 border border-gray-300 rounded-lg resize-none bg-green-50/30 text-sm overflow-y-auto text-gray-700"
-                      placeholder="编辑后的标签将在这里显示..."
-                    />
-                    <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
-                      <span>
-                        {selectedTags.filter((_, index) => !disabledTags.has(index)).join(', ').length} 字符
+              {/* 翻译功能说明 */}
+              {selectedTags.length > 0 && (
+                <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm text-blue-800">
+                      <Languages className="text-blue-600" size={16} />
+                      <span className="font-medium">智能翻译已启用</span>
+                      <span className="text-blue-600">
+                        • 标签下方会自动显示中文翻译 
+                        • 支持本地词典和在线翻译
+                        • 点击"翻译全部"获取所有标签翻译
                       </span>
-                      <span>启用标签: {selectedTags.filter((_, index) => !disabledTags.has(index)).length}/{selectedTags.length}</span>
+                    </div>
+                    <div className="text-xs text-blue-600 bg-white px-2 py-1 rounded border">
+                      {Object.keys(translatedTags).length}/{selectedTags.length} 已翻译
                     </div>
                   </div>
-                  
-                  {/* 标签编辑区域 */}
-                <div 
-                  className="flex flex-wrap gap-3"
-                  style={{
-                    paddingBottom: '20px'
-                  }}
-                >
-                    {selectedTags.map((tag, index) => {
-                      // 检查当前标签是否已收藏
-                      const tagText = typeof tag === 'string' ? tag : tag.en;
-                      const isTagFavorited = favorites.some(fav => fav.en === tagText);
-                      
-                      return (
-                    <TagPill
-                          key={`${tag}-${index}`}
-                      tag={tag}
-                      index={index}
-                      isDisabled={disabledTags.has(index)}
-                          isFavorited={isTagFavorited}
-                          onDelete={deleteTag}
-                          onToggleDisabled={toggleDisabled}
-                          onAdjustWeight={adjustWeight}
-                          onAdjustBrackets={adjustBrackets}
-                          onCopy={copyTag}
-                          onFavorite={favoriteTag}
-                          onTranslate={translateSingleTag}
-                      translatedTags={translatedTags}
-                      hoveredTag={hoveredTag}
-                      setHoveredTag={setHoveredTag}
-                      targetLanguage={targetLanguage}
-                      onTranslationUpdate={handleTranslationUpdate}
-                    />
-                      );
-                    })}
                 </div>
-                </>
               )}
+              
+              <div 
+                className="border border-gray-300 rounded-lg p-4 bg-blue-50/20 relative"
+                style={{
+                  minHeight: '200px',
+                  height: 'auto'
+                }}
+              >
+                {selectedTags.length === 0 ? (
+                  <div className="flex items-center justify-center h-24 text-gray-500">
+                    <div className="text-center">
+                      <TagIcon size={24} className="mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">点击下方标签库添加标签</p>
+                      <p className="text-xs text-gray-400 mt-1">或在上方输入区直接输入提示词</p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* 标签预览区域 - 类似英文输出区格式 */}
+                    <div className="mb-4">
+                      <textarea
+                        value={selectedTags.filter((_, index) => !disabledTags.has(index)).join(', ')}
+                        readOnly
+                        className="w-full h-20 p-3 border border-gray-300 rounded-lg resize-none bg-green-50/30 text-sm overflow-y-auto text-gray-700"
+                        placeholder="编辑后的标签将在这里显示..."
+                      />
+                      <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
+                        <span>
+                          {selectedTags.filter((_, index) => !disabledTags.has(index)).join(', ').length} 字符
+                        </span>
+                        <span>启用标签: {selectedTags.filter((_, index) => !disabledTags.has(index)).length}/{selectedTags.length}</span>
+                      </div>
+                    </div>
+                    
+                    {/* 标签编辑区域 */}
+                    <div 
+                      className="flex flex-wrap gap-3"
+                      style={{
+                        paddingBottom: '20px'
+                      }}
+                    >
+                      {selectedTags.map((tag, index) => {
+                        // 检查当前标签是否已收藏
+                        const tagText = typeof tag === 'string' ? tag : tag.en;
+                        const isTagFavorited = favorites.some(fav => fav.en === tagText);
+                        
+                        return (
+                          <TagPill
+                            key={`${tag}-${index}`}
+                            tag={tag}
+                            index={index}
+                            isDisabled={disabledTags.has(index)}
+                            isFavorited={isTagFavorited}
+                            onDelete={deleteTag}
+                            onToggleDisabled={toggleDisabled}
+                            onAdjustWeight={adjustWeight}
+                            onAdjustBrackets={adjustBrackets}
+                            onCopy={copyTag}
+                            onFavorite={favoriteTag}
+                            onTranslate={translateSingleTag}
+                            translatedTags={translatedTags}
+                            hoveredTag={hoveredTag}
+                            setHoveredTag={setHoveredTag}
+                            targetLanguage={targetLanguage}
+                            onTranslationUpdate={handleTranslationUpdate}
+                          />
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* 标签库区域 */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* 左侧：搜索和分类 */}
-          <div className="lg:col-span-1 space-y-4">
+          {/* 标签库区域 */}
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            {/* 左侧：搜索和分类 */}
+            <div className="lg:col-span-1 space-y-4">
               {/* 搜索框 */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
                 <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="搜索标签..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
 
-            {/* 库模式切换 */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-              <h3 className="font-semibold text-gray-900 mb-3">标签库模式</h3>
-              <div className="flex flex-col gap-2">
-                <button
-                  onClick={() => setLibraryMode('default')}
-                  className={`px-3 py-2 text-sm rounded-lg transition-colors ${
-                    libraryMode === 'default'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  默认标签库
-                          </button>
-                          <button
-                  onClick={() => setLibraryMode('custom')}
-                  className={`px-3 py-2 text-sm rounded-lg transition-colors ${
-                    libraryMode === 'custom'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  自定义库
-                          </button>
-                        </div>
-                      </div>
-
-            {/* 分类侧边栏 */}
-            <CategorySidebar
-              libraryMode={libraryMode}
-              selectedCategory={selectedCategory}
-              selectedSubcategory={selectedSubcategory}
-              expandedCategories={expandedCategories}
-              currentDatabase={currentDatabase}
-              favorites={favorites}
-              onSelectCategory={selectCategory}
-              onToggleCategory={toggleCategory}
-            />
-
-            {/* 管理工具栏 */}
-            <TagManagerToolbar
-              libraryMode={libraryMode}
-              showTagManager={showTagManager}
-              showImportExport={showImportExport}
-              onToggleTagManager={() => setShowTagManager(!showTagManager)}
-              onShowImportExport={() => setShowImportExport(!showImportExport)}
-              onShowCustomLibraryManager={() => setShowCustomLibraryManager(true)}
-              onShowLibraryManager={() => setShowImportExport(true)}
-              onAddTag={handleAddNewTag}
-              onRefreshDatabase={handleRefreshDatabase}
-              canEdit={libraryMode === 'custom'}
-            />
-                              </div>
-
-          {/* 右侧：标签展示 */}
-          <div className="lg:col-span-4">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-gray-900 flex items-center">
-                  <Database className="text-purple-600 mr-2" size={18} />
-                  标签库 ({currentTags.length} 个标签)
-                  {searchQuery && (
-                    <span className="text-sm text-gray-500 ml-2">
-                      搜索 "{searchQuery}"
-                    </span>
-                  )}
-                    </h3>
-                
-                {/* 当前分类信息 */}
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <span>
-                    {selectedCategory === 'favorites' ? '我的收藏' : 
-                     currentDatabase?.[selectedCategory]?.name || selectedCategory}
-                        </span>
-                  {selectedSubcategory && (
-                    <>
-                      <span>›</span>
-                      <span>
-                        {currentDatabase?.[selectedCategory]?.subcategories?.[selectedSubcategory]?.name || selectedSubcategory}
-                      </span>
-                          </>
-                        )}
+              {/* 库模式切换 */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                <h3 className="font-semibold text-gray-900 mb-3">标签库模式</h3>
+                <div className="flex flex-col gap-2">
+                  <button
+                    onClick={() => setLibraryMode('default')}
+                    className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+                      libraryMode === 'default'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    默认标签库
+                  </button>
+                  <button
+                    onClick={() => setLibraryMode('custom')}
+                    className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+                      libraryMode === 'custom'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    自定义库
+                  </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 max-h-96 overflow-y-auto">
-                    {currentTags.map((tag, index) => (
-                      <TagCard
-                    key={`${tag.en}-${index}`}
-                        tag={tag}
-                    onAdd={addTag}
-                    onToggleFavorite={favoriteTag}
-                        isFavorited={favorites.some(fav => fav.en === tag.en)}
-                    onEdit={(tag) => handleEditTag(tag, selectedCategory, selectedSubcategory)}
-                    onDelete={(tag) => {
-                      if (window.confirm(`确定要删除标签 "${tag.en}" 吗？`)) {
-                        handleDeleteTag(tag.id, selectedCategory, selectedSubcategory);
-                      }
-                    }}
-                    isEditable={libraryMode === 'custom'}
-                        showManagement={showTagManager}
-                      />
-                    ))}
-      </div>
+              {/* 分类侧边栏 */}
+              <CategorySidebar
+                libraryMode={libraryMode}
+                selectedCategory={selectedCategory}
+                selectedSubcategory={selectedSubcategory}
+                expandedCategories={expandedCategories}
+                currentDatabase={currentDatabase}
+                favorites={favorites}
+                onSelectCategory={selectCategory}
+                onToggleCategory={toggleCategory}
+              />
 
-              {currentTags.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <Database size={48} className="mx-auto mb-2 opacity-50" />
-                  <p>暂无标签</p>
-                  {searchQuery ? (
-                    <p className="text-sm">尝试其他搜索关键词</p>
-                  ) : (
-                    <p className="text-sm">尝试切换分类或添加标签</p>
-                  )}
+              {/* 管理工具栏 */}
+              <TagManagerToolbar
+                libraryMode={libraryMode}
+                showTagManager={showTagManager}
+                showImportExport={showImportExport}
+                onToggleTagManager={() => setShowTagManager(!showTagManager)}
+                onShowImportExport={() => setShowImportExport(!showImportExport)}
+                onShowCustomLibraryManager={() => setShowCustomLibraryManager(true)}
+                onShowLibraryManager={() => setShowImportExport(true)}
+                onAddTag={handleAddNewTag}
+                onRefreshDatabase={handleRefreshDatabase}
+                canEdit={libraryMode === 'custom'}
+              />
+            </div>
+
+            {/* 右侧：标签展示 */}
+            <div className="lg:col-span-4">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-gray-900 flex items-center">
+                    <Database className="text-purple-600 mr-2" size={18} />
+                    标签库 ({currentTags.length} 个标签)
+                    {searchQuery && (
+                      <span className="text-sm text-gray-500 ml-2">
+                        搜索 "{searchQuery}"
+                      </span>
+                    )}
+                  </h3>
+                  
+                  {/* 当前分类信息 */}
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <span>
+                      {selectedCategory === 'favorites' ? '我的收藏' : 
+                       currentDatabase?.[selectedCategory]?.name || selectedCategory}
+                    </span>
+                    {selectedSubcategory && (
+                      <>
+                        <span>›</span>
+                        <span>
+                          {currentDatabase?.[selectedCategory]?.subcategories?.[selectedSubcategory]?.name || selectedSubcategory}
+                        </span>
+                      </>
+                    )}
+                  </div>
                 </div>
-              )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 max-h-96 overflow-y-auto">
+                  {currentTags.map((tag, index) => (
+                    <TagCard
+                      key={`${tag.en}-${index}`}
+                      tag={tag}
+                      onAdd={addTag}
+                      onToggleFavorite={favoriteTag}
+                      isFavorited={favorites.some(fav => fav.en === tag.en)}
+                      onEdit={(tag) => handleEditTag(tag, selectedCategory, selectedSubcategory)}
+                      onDelete={(tag) => {
+                        if (window.confirm(`确定要删除标签 "${tag.en}" 吗？`)) {
+                          handleDeleteTag(tag.id, selectedCategory, selectedSubcategory);
+                        }
+                      }}
+                      isEditable={libraryMode === 'custom'}
+                      showManagement={showTagManager}
+                    />
+                  ))}
+                </div>
+
+                {currentTags.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <Database size={48} className="mx-auto mb-2 opacity-50" />
+                    <p>暂无标签</p>
+                    {searchQuery ? (
+                      <p className="text-sm">尝试其他搜索关键词</p>
+                    ) : (
+                      <p className="text-sm">尝试切换分类或添加标签</p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
 
+        {/* 教程模态框 */}
+        {showTutorial && (
+          <TutorialModal onClose={() => setShowTutorial(false)} />
+        )}
 
-
-      {/* 教程模态框 */}
-      {showTutorial && (
-        <TutorialModal onClose={() => setShowTutorial(false)} />
-      )}
-
-      {/* 自定义库管理模态框 */}
-      {showCustomLibraryManager && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900">自定义库管理</h2>
-              <p className="text-gray-600 text-sm mt-1">管理您的自定义标签库和分类</p>
-            </div>
-            
-            <div className="p-6 space-y-6 overflow-y-auto max-h-[60vh]">
-              {/* 添加新分类 */}
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-gray-900 mb-3">添加新分类</h3>
-                <div className="flex gap-3">
-                  <input
-                    type="text"
-                    placeholder="分类名称"
-                    value={newCategoryData.name}
-                    onChange={(e) => setNewCategoryData(prev => ({ ...prev, name: e.target.value }))}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  <input
-                    type="text"
-                    placeholder="图标"
-                    value={newCategoryData.icon}
-                    onChange={(e) => setNewCategoryData(prev => ({ ...prev, icon: e.target.value }))}
-                    className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  <button
-                    onClick={() => handleAddNewCategory(newCategoryData)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    添加
-                  </button>
-                </div>
+        {/* 自定义库管理模态框 */}
+        {showCustomLibraryManager && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
+              <div className="p-6 border-b border-gray-200">
+                <h2 className="text-xl font-bold text-gray-900">自定义库管理</h2>
+                <p className="text-gray-600 text-sm mt-1">管理您的自定义标签库和分类</p>
               </div>
+              
+              <div className="p-6 space-y-6 overflow-y-auto max-h-[60vh]">
+                {/* 添加新分类 */}
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-gray-900 mb-3">添加新分类</h3>
+                  <div className="flex gap-3">
+                    <input
+                      type="text"
+                      placeholder="分类名称"
+                      value={newCategoryData.name}
+                      onChange={(e) => setNewCategoryData(prev => ({ ...prev, name: e.target.value }))}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    <input
+                      type="text"
+                      placeholder="图标"
+                      value={newCategoryData.icon}
+                      onChange={(e) => setNewCategoryData(prev => ({ ...prev, icon: e.target.value }))}
+                      className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center"
+                    />
+                    <button
+                      onClick={() => handleAddNewCategory(newCategoryData)}
+                      disabled={!newCategoryData.name.trim()}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      添加
+                    </button>
+                  </div>
+                </div>
 
-              {/* 当前分类列表 */}
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-3">当前分类</h3>
-                <div className="space-y-2">
+                {/* 现有分类管理 */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-gray-900">现有分类</h3>
                   {Object.entries(customLibrary.categories || {}).map(([categoryKey, category]) => (
-                    <div key={categoryKey} className="bg-gray-50 p-3 rounded-lg">
-                      <div className="flex items-center justify-between">
+                    <div key={categoryKey} className="bg-gray-50 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <span className="text-lg">{category.icon}</span>
                           <span className="font-medium">{category.name}</span>
@@ -2019,155 +1970,155 @@ const PromptLibraryPage = () => {
                   ))}
                 </div>
               </div>
-            </div>
-            
-            <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
-              <button
-                onClick={() => setShowCustomLibraryManager(false)}
-                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-              >
-                关闭
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 标签编辑模态框 */}
-      {editingTag && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900">
-                {editingTag.isNew ? '添加新标签' : '编辑标签'}
-              </h2>
-            </div>
-            
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">英文标签</label>
-                <input
-                  type="text"
-                  placeholder="beautiful girl"
-                  value={newTagData.en}
-                  onChange={(e) => setNewTagData(prev => ({ ...prev, en: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">中文翻译</label>
-                <input
-                  type="text"
-                  placeholder="美丽女孩"
-                  value={newTagData.cn}
-                  onChange={(e) => setNewTagData(prev => ({ ...prev, cn: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  热度值 ({newTagData.frequency})
-                </label>
-                <input
-                  type="range"
-                  min="1"
-                  max="100"
-                  value={newTagData.frequency}
-                  onChange={(e) => setNewTagData(prev => ({ ...prev, frequency: parseInt(e.target.value) }))}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-xs text-gray-500 mt-1">
-                  <span>冷门</span>
-                  <span>热门</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
-              <button
-                onClick={() => {
-                  setEditingTag(null);
-                  setNewTagData({ en: '', cn: '', frequency: 50 });
-                }}
-                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-              >
-                取消
-              </button>
-              <button
-                onClick={() => editingTag.isNew ? handleSaveNewTag(newTagData) : handleSaveEditedTag(newTagData)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                {editingTag.isNew ? '添加' : '保存'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 导入导出模态框 */}
-      {showImportExport && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900">库管理系统</h2>
-              <p className="text-gray-600 text-sm mt-1">导入导出您的标签库数据</p>
-            </div>
-            
-            <div className="p-6 space-y-6">
-              {/* 导出功能 */}
-              <div className="bg-green-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-gray-900 mb-3">导出数据</h3>
-                <p className="text-gray-600 text-sm mb-3">将您的自定义库和收藏导出为JSON文件</p>
+              <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
                 <button
-                  onClick={handleExportLibrary}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  onClick={() => setShowCustomLibraryManager(false)}
+                  className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
                 >
-                  下载库数据
+                  关闭
                 </button>
               </div>
-
-              {/* 导入功能 */}
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="font-semibold text-gray-900 mb-3">导入数据</h3>
-                <p className="text-gray-600 text-sm mb-3">从JSON文件导入标签库数据</p>
-                <textarea
-                  placeholder="请粘贴JSON数据..."
-                  value={importExportData}
-                  onChange={(e) => setImportExportData(e.target.value)}
-                  className="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-mono"
-                />
-                <div className="mt-3 flex gap-2">
-                  <button
-                    onClick={() => handleImportLibrary(importExportData)}
-                    disabled={!importExportData.trim()}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    导入数据
-                  </button>
-                  <button
-                    onClick={() => setImportExportData('')}
-                    className="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors"
-                  >
-                    清空
-                  </button>
-                </div>
-              </div>
-            </div>
-            
-            <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
-              <button
-                onClick={() => setShowImportExport(false)}
-                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-              >
-                关闭
-              </button>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+
+        {/* 标签编辑模态框 */}
+        {editingTag && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+              <div className="p-6 border-b border-gray-200">
+                <h2 className="text-xl font-bold text-gray-900">
+                  {editingTag.isNew ? '添加新标签' : '编辑标签'}
+                </h2>
+              </div>
+              
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">英文标签</label>
+                  <input
+                    type="text"
+                    placeholder="beautiful girl"
+                    value={newTagData.en}
+                    onChange={(e) => setNewTagData(prev => ({ ...prev, en: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">中文翻译</label>
+                  <input
+                    type="text"
+                    placeholder="美丽女孩"
+                    value={newTagData.cn}
+                    onChange={(e) => setNewTagData(prev => ({ ...prev, cn: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    热度值 ({newTagData.frequency})
+                  </label>
+                  <input
+                    type="range"
+                    min="1"
+                    max="100"
+                    value={newTagData.frequency}
+                    onChange={(e) => setNewTagData(prev => ({ ...prev, frequency: parseInt(e.target.value) }))}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>冷门</span>
+                    <span>热门</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setEditingTag(null);
+                    setNewTagData({ en: '', cn: '', frequency: 50 });
+                  }}
+                  className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={() => editingTag.isNew ? handleSaveNewTag(newTagData) : handleSaveEditedTag(newTagData)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  {editingTag.isNew ? '添加' : '保存'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 导入导出模态框 */}
+        {showImportExport && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden">
+              <div className="p-6 border-b border-gray-200">
+                <h2 className="text-xl font-bold text-gray-900">库管理系统</h2>
+                <p className="text-gray-600 text-sm mt-1">导入导出您的标签库数据</p>
+              </div>
+              
+              <div className="p-6 space-y-6">
+                {/* 导出功能 */}
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-gray-900 mb-3">导出数据</h3>
+                  <p className="text-gray-600 text-sm mb-3">将您的自定义库和收藏导出为JSON文件</p>
+                  <button
+                    onClick={handleExportLibrary}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    下载库数据
+                  </button>
+                </div>
+
+                {/* 导入功能 */}
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-gray-900 mb-3">导入数据</h3>
+                  <p className="text-gray-600 text-sm mb-3">从JSON文件导入标签库数据</p>
+                  <textarea
+                    placeholder="请粘贴JSON数据..."
+                    value={importExportData}
+                    onChange={(e) => setImportExportData(e.target.value)}
+                    className="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-mono"
+                  />
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      onClick={() => handleImportLibrary(importExportData)}
+                      disabled={!importExportData.trim()}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      导入数据
+                    </button>
+                    <button
+                      onClick={() => setImportExportData('')}
+                      className="px-4 py-2 bg-gray-400 text-white rounded-lg hover:bg-gray-500 transition-colors"
+                    >
+                      清空
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
+                <button
+                  onClick={() => setShowImportExport(false)}
+                  className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  关闭
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 

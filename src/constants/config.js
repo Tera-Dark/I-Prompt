@@ -3,13 +3,47 @@ export const API_CONFIG = {
   // 主要API选项
   APIS: [
     {
-      name: 'SiliconFlow',
+      name: 'SiliconFlow-DeepSeek-R1',
       provider: 'siliconflow',
       baseUrl: 'https://api.siliconflow.cn/v1',
       apiKey: process.env.REACT_APP_SILICONFLOW_API_KEY || 'sk-zzvfbjuitzusxvjwztcfrlpnjzcfdkutdkgxnhrwgihtytkh',
       model: 'deepseek-ai/DeepSeek-R1',
       available: true,
-      priority: 1
+      priority: 1,
+      description: 'DeepSeek-R1 推理模型，理解能力强'
+    },
+    {
+      name: 'SiliconFlow-DeepSeek-V3',
+      provider: 'siliconflow',
+      baseUrl: 'https://api.siliconflow.cn/v1',
+      apiKey: process.env.REACT_APP_SILICONFLOW_API_KEY || 'sk-zzvfbjuitzusxvjwztcfrlpnjzcfdkutdkgxnhrwgihtytkh',
+      model: 'deepseek-ai/DeepSeek-V3',
+      available: true,
+      priority: 2,
+      description: 'DeepSeek-V3 最新模型，性能更强'
+    },
+    {
+      name: 'SiliconFlow-DeepSeek-R1-Qwen3',
+      provider: 'siliconflow',
+      baseUrl: 'https://api.siliconflow.cn/v1',
+      apiKey: process.env.REACT_APP_SILICONFLOW_API_KEY || 'sk-zzvfbjuitzusxvjwztcfrlpnjzcfdkutdkgxnhrwgihtytkh',
+      model: 'deepseek-ai/DeepSeek-R1-0528-Qwen3-8B',
+      available: true,
+      priority: 3,
+      description: 'DeepSeek-R1 Qwen3混合模型'
+    },
+    {
+      name: 'NVIDIA-DeepSeek-R1',
+      provider: 'nvidia',
+      baseUrl: 'https://integrate.api.nvidia.com/v1',
+      apiKey: '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',
+      model: 'deepseek-ai/deepseek-r1',
+      available: true,
+      priority: 4,
+      description: 'NVIDIA API DeepSeek-R1 模型',
+      headers: {
+        'User-Agent': 'I-Prompt/3.0 NVIDIA-API-Client'
+      }
     },
     {
       name: 'OpenRouter-DeepSeek',
@@ -18,7 +52,8 @@ export const API_CONFIG = {
       apiKey: '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',
       model: 'deepseek/deepseek-chat',
       available: true,
-      priority: 2,
+      priority: 5,
+      description: 'OpenRouter DeepSeek 模型',
       headers: {
         'HTTP-Referer': window.location.origin, // OpenRouter要求的额外头
         'X-Title': 'I-Prompt Assistant'

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Brain, Copy, CheckCircle, Loader2, Sparkles, AlertCircle, Heart, Clock, History } from 'lucide-react';
+import { Brain, Copy, CheckCircle, Loader2, Sparkles, AlertCircle, Heart, Clock, History, Cpu } from 'lucide-react';
 import { usePromptGenerator } from '../hooks/usePromptGenerator';
 import { QUICK_TAGS, PAINTING_STYLES } from '../constants/data';
 import { APP_CONFIG } from '../constants/config';
@@ -11,6 +11,7 @@ const PromptGeneratorPage = () => {
     inputText,
     generatedPrompt,
     selectedStyle,
+    selectedModel,
     isGenerating,
     generationCount,
     apiError,
@@ -19,10 +20,12 @@ const PromptGeneratorPage = () => {
     currentApiInfo,
     setInputText,
     setSelectedStyle,
+    setSelectedModel,
     generatePrompt,
     copyPrompt,
     insertTag,
-    getApiStatus
+    getApiStatus,
+    getAvailableModels
   } = usePromptGenerator();
 
   const [showQuickTags, setShowQuickTags] = useState(false);
@@ -179,6 +182,45 @@ const PromptGeneratorPage = () => {
             </div>
           </div>
 
+          {/* 模型选择 */}
+          <div className="space-y-3 border-t pt-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-700 flex items-center">
+                <Cpu className="mr-2 text-blue-600" size={16} />
+                选择AI模型：
+              </span>
+              <span className="text-xs text-gray-500">
+                {currentApiInfo ? `当前: ${currentApiInfo.provider}` : ''}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {getAvailableModels().map(model => (
+                <button
+                  key={model.id}
+                  onClick={() => setSelectedModel(model.id)}
+                  className={`p-3 text-left rounded-lg border transition-all text-sm ${
+                    selectedModel === model.id
+                      ? 'bg-blue-50 border-blue-300 text-blue-900'
+                      : 'bg-white border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 text-gray-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-medium">{model.name}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                      model.available 
+                        ? 'bg-green-100 text-green-700' 
+                        : 'bg-red-100 text-red-700'
+                    }`}>
+                      {model.available ? '可用' : '不可用'}
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-600">{model.description}</div>
+                  <div className="text-xs text-gray-500 mt-1">{model.provider}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* 快速标签 */}
           <div className="border-t pt-4">
             <div className="flex justify-between items-center mb-3">
@@ -312,7 +354,7 @@ const PromptGeneratorPage = () => {
           <div className="flex items-center">
             <Brain className="mr-2 text-blue-600" size={20} />
             DeepSeek AI 使用技巧
-            <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Pro Tips</span>
+            <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">多模型支持</span>
           </div>
           <button
             onClick={() => {
@@ -338,6 +380,10 @@ const PromptGeneratorPage = () => {
               <span className="text-blue-500 mr-2 mt-0.5">▸</span>
               <span>可以描述情绪、光影、构图等细节，AI理解能力很强</span>
             </div>
+            <div className="flex items-start">
+              <span className="text-green-500 mr-2 mt-0.5">🤖</span>
+              <span>不同模型有不同特色：R1推理强，V3性能佳，NVIDIA稳定</span>
+            </div>
           </div>
           <div className="space-y-2">
             <div className="flex items-start">
@@ -351,6 +397,10 @@ const PromptGeneratorPage = () => {
             <div className="flex items-start">
               <span className="text-purple-500 mr-2 mt-0.5">★</span>
               <span>可以多次生成不同版本，选择最满意的结果</span>
+            </div>
+            <div className="flex items-start">
+              <span className="text-orange-500 mr-2 mt-0.5">⚡</span>
+              <span>系统会自动切换可用模型，确保服务稳定性</span>
             </div>
           </div>
         </div>
