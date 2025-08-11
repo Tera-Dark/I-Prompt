@@ -8,7 +8,7 @@ import {
 import { 
   analyzeImageTags, 
   validateImageFile, 
-  getAvailableModels 
+  getAvailableModels
 } from '../services/imageTaggingService';
 import { copyToClipboard } from '../utils/clipboard';
 import { useNotify } from '../components/common/NotificationSystem';
@@ -394,9 +394,11 @@ const ImageReversePage = () => {
                         </option>
                       ))}
                     </select>
-                    <p className="text-xs text-gray-500 mt-1">
-                      推荐使用 wd-swinv2-tagger-v3 获得最佳效果
-                    </p>
+                    {availableModels.find(m => m.id === selectedModel)?.description && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        {availableModels.find(m => m.id === selectedModel).description}
+                      </p>
+                    )}
                   </div>
 
                   {/* 基础阈值设置 */}
@@ -946,4 +948,4 @@ const ImageReversePage = () => {
   );
 };
 
-export default ImageReversePage; 
+export default ImageReversePage;
