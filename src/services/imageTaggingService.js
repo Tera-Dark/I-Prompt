@@ -12,11 +12,90 @@ const WD_TAGGER_CONFIG = {
   
   // 可用的模型列表
   models: [
-    "SmilingWolf/wd-swinv2-tagger-v3",
-    "SmilingWolf/wd-convnext-tagger-v3", 
-    "SmilingWolf/wd-vit-tagger-v3",
-    "SmilingWolf/wd-vit-large-tagger-v3",
-    "SmilingWolf/wd-eva02-large-tagger-v3"
+    {
+      id: "SmilingWolf/wd-swinv2-tagger-v3",
+      name: "wd-swinv2-tagger-v3 (推荐)",
+      description: "SwinV2架构，平衡性能与准确度",
+      version: "v3",
+      recommended: true
+    },
+    {
+      id: "SmilingWolf/wd-convnext-tagger-v3",
+      name: "wd-convnext-tagger-v3",
+      description: "ConvNeXt架构，高准确度",
+      version: "v3",
+      recommended: false
+    },
+    {
+      id: "SmilingWolf/wd-vit-tagger-v3",
+      name: "wd-vit-tagger-v3",
+      description: "Vision Transformer架构",
+      version: "v3",
+      recommended: false
+    },
+    {
+      id: "SmilingWolf/wd-vit-large-tagger-v3",
+      name: "wd-vit-large-tagger-v3",
+      description: "大型ViT模型，最高准确度",
+      version: "v3",
+      recommended: false
+    },
+    {
+      id: "SmilingWolf/wd-eva02-large-tagger-v3",
+      name: "wd-eva02-large-tagger-v3",
+      description: "EVA02架构，最新模型",
+      version: "v3",
+      recommended: false
+    },
+    {
+      id: "SmilingWolf/wd-v1-4-moat-tagger-v2",
+      name: "wd-v1-4-moat-tagger-v2",
+      description: "MOAT架构，v2版本",
+      version: "v2",
+      recommended: false
+    },
+    {
+      id: "SmilingWolf/wd-v1-4-swinv2-tagger-v2",
+      name: "wd-v1-4-swinv2-tagger-v2",
+      description: "SwinV2架构，v2版本",
+      version: "v2",
+      recommended: false
+    },
+    {
+      id: "SmilingWolf/wd-v1-4-convnext-tagger-v2",
+      name: "wd-v1-4-convnext-tagger-v2",
+      description: "ConvNeXt架构，v2版本",
+      version: "v2",
+      recommended: false
+    },
+    {
+      id: "SmilingWolf/wd-v1-4-convnextv2-tagger-v2",
+      name: "wd-v1-4-convnextv2-tagger-v2",
+      description: "ConvNeXtV2架构，v2版本",
+      version: "v2",
+      recommended: false
+    },
+    {
+      id: "SmilingWolf/wd-v1-4-vit-tagger-v2",
+      name: "wd-v1-4-vit-tagger-v2",
+      description: "Vision Transformer，v2版本",
+      version: "v2",
+      recommended: false
+    },
+    {
+      id: "deepghs/idolsankaku-swinv2-tagger-v1",
+      name: "idolsankaku-swinv2-tagger-v1",
+      description: "专门针对偶像和角色的模型",
+      version: "v1",
+      recommended: false
+    },
+    {
+      id: "deepghs/idolsankaku-eva02-large-tagger-v1",
+      name: "idolsankaku-eva02-large-tagger-v1",
+      description: "大型偶像角色识别模型",
+      version: "v1",
+      recommended: false
+    }
   ],
   defaultModel: "SmilingWolf/wd-swinv2-tagger-v3",
   
@@ -26,6 +105,20 @@ const WD_TAGGER_CONFIG = {
   
   // 支持的图像格式
   supportedFormats: ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+};
+
+/**
+ * 获取可用模型列表
+ */
+export const getAvailableModels = () => {
+  return WD_TAGGER_CONFIG.models.map(model => ({
+    id: model.id,
+    name: model.id.split('/')[1] || model.id,
+    fullName: model.id,
+    displayName: model.name,
+    description: model.description,
+    recommended: model.recommended
+  }));
 };
 
 /**
@@ -288,37 +381,14 @@ export const tagsToPrompt = (tags, options = {}) => {
   return promptTags.join(', ');
 };
 
-/**
- * 获取可用的模型列表
- */
-export const getAvailableModels = () => {
-  return WD_TAGGER_CONFIG.models.map(model => ({
-    id: model,
-    name: model.split('/')[1] || model,
-    fullName: model
-  }));
-};
 
-/**
- * 检查后端状态
- */
-export const checkBackendStatus = async () => {
-  return await checkBackendHealth();
-};
-
-/**
- * 导出配置
- */
-export const imageTaggingConfig = WD_TAGGER_CONFIG;
 
 // 默认导出
 const imageTaggingService = {
   analyzeImageTags,
   validateImageFile,
   tagsToPrompt,
-  getAvailableModels,
-  checkBackendStatus,
-  imageTaggingConfig
+  getAvailableModels
 };
 
-export default imageTaggingService; 
+export default imageTaggingService;
