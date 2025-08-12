@@ -79,4 +79,14 @@ html {
 
 .prompt-edit-area:hover .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #9ca3af;
-} 
+}
+
+/* 隐藏滚动条但保持滚动功能 */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}

@@ -1,4 +1,5 @@
-import { API_CONFIG } from '../constants/config';
+import { API_CONFIG } from '../constants/config.js';
+import { zhipuConfigManager } from '../config/zhipuConfig.js';
 
 /**
  * API管理服务
@@ -10,26 +11,42 @@ class ApiManager {
     this.currentApi = null;
     this.healthCheckInterval = null;
     this.lastHealthCheck = {};
-    
-    // 初始化
-    this.initializeApis();
   }
 
   /**
-   * 初始化API列表，按优先级排序
+   * 初始化API管理器
    */
-  initializeApis() {
-    // 按优先级排序
-    this.apis.sort((a, b) => a.priority - b.priority);
+  async init() {
+    console.log('🚀 [ApiManager] 初始化API管理器...');
     
-    // 设置初始API
-    this.currentApi = this.apis.find(api => api.available) || this.apis[0];
+    // 深拷贝API配置，避免修改原始配置
+    this.apis = JSON.parse(JSON.stringify(API_CONFIG.APIS));
     
-    console.log('🚀 [ApiManager] 初始化完成，当前API:', this.currentApi?.name);
+    // 为智谱GLM动态设置API密钥
+    const zhipuApi = this.apis.find(api => api.provider === 'zhipu');
+    if (zhipuApi) {
+      const zhipuConfig = zhipuConfigManager.getConfig();
+      if (zhipuConfig.apiKey) {
+        zhipuApi.apiKey = zhipuConfig.apiKey;
+        console.log('🔑 [ApiManager] 已为智谱GLM设置API密钥');
+      } else {
+        console.log('⚠️ [ApiManager] 智谱GLM未设置API密钥');
+      }
+    }
     
-    // 开始健康检查
-    this.startHealthCheck();
+    // 初始化健康检查记录
+    this.lastHealthCheck = {};
+    
+    // 执行初始健康检查
+    await this.checkAllApisHealth();
+    
+    // 选择第一个可用的API
+    await this.switchToNextAvailableApi();
+    
+    console.log(`✅ [ApiManager] 初始化完成，当前API: ${this.currentApi?.name || 'None'}`);
   }
+
+
 
   /**
    * 获取当前可用的API
@@ -60,6 +77,20 @@ class ApiManager {
     try {
       console.log(`🔍 [ApiManager] 检查API健康状态: ${api.name}`);
       
+      // 如果是智谱GLM且需要API密钥但未设置，跳过检查
+      if (api.provider === 'zhipu' && api.requiresApiKey && !api.apiKey) {
+        console.log(`⚠️ [ApiManager] ${api.name} 需要设置API密钥，跳过健康检查`);
+        api.available = false;
+        this.lastHealthCheck[api.name] = {
+          timestamp: Date.now(),
+          healthy: false,
+          responseTime: 0,
+          status: null,
+          error: '需要设置API密钥'
+        };
+        return false;
+      }
+      
       // 构建测试请求
       const testRequest = {
         model: api.model,
@@ -80,7 +111,15 @@ class ApiManager {
         ...api.headers // 添加API特定的头部
       };
 
-      const response = await fetch(`${api.baseUrl}/chat/completions`, {
+      // 根据API提供商选择不同的端点
+      let endpoint;
+      if (api.provider === 'zhipu') {
+        endpoint = `${api.baseUrl}chat/completions`;
+      } else {
+        endpoint = `${api.baseUrl}/chat/completions`;
+      }
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers,
         body: JSON.stringify(testRequest),
@@ -177,6 +216,12 @@ class ApiManager {
     }
 
     const api = this.currentApi;
+    
+    // 检查智谱GLM是否需要API密钥
+    if (api.provider === 'zhipu' && api.requiresApiKey && !api.apiKey) {
+      throw new Error('智谱GLM需要设置API密钥，请在设置中配置');
+    }
+    
     const requestBody = {
       model: api.model,
       messages: messages,
@@ -197,7 +242,15 @@ class ApiManager {
 
       console.log(`📡 [ApiManager] 请求头:`, headers);
 
-      const response = await fetch(`${api.baseUrl}/chat/completions`, {
+      // 根据API提供商选择不同的端点
+      let endpoint;
+      if (api.provider === 'zhipu') {
+        endpoint = `${api.baseUrl}chat/completions`;
+      } else {
+        endpoint = `${api.baseUrl}/chat/completions`;
+      }
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers,
         body: JSON.stringify(requestBody),
@@ -347,9 +400,39 @@ class ApiManager {
     }
     return false;
   }
+
+  /**
+   * 更新智谱GLM API密钥
+   */
+  async updateZhipuApiKey() {
+    const zhipuApi = this.apis.find(api => api.provider === 'zhipu');
+    if (zhipuApi) {
+      const zhipuConfig = zhipuConfigManager.getConfig();
+      if (zhipuConfig.apiKey) {
+        zhipuApi.apiKey = zhipuConfig.apiKey;
+        console.log('🔑 [ApiManager] 智谱GLM API密钥已更新');
+        
+        // 重新检查健康状态
+        await this.checkApiHealth(zhipuApi);
+        
+        // 如果当前没有可用API，尝试切换
+        if (!this.currentApi?.available) {
+          await this.switchToNextAvailableApi();
+        }
+        
+        return true;
+      } else {
+        zhipuApi.apiKey = null;
+        zhipuApi.available = false;
+        console.log('⚠️ [ApiManager] 智谱GLM API密钥已清除');
+        return false;
+      }
+    }
+    return false;
+  }
 }
 
 // 创建全局单例
 const apiManager = new ApiManager();
 
-export default apiManager; 
+export default apiManager;

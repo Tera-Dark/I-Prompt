@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import multiTranslationManager from '../services/multiTranslationManager';
+import multiTranslationManager from '../services/newTranslationManager';
 
 /**
  * 多引擎翻译Hook
@@ -237,4 +237,4 @@ export const useMultiTranslation = () => {
     clearCache,
     getTranslationStats
   };
-}; 
+};

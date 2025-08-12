@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Globe, Settings, Zap, TrendingUp, Layers } from 'lucide-react';
+import { Settings, Zap, TrendingUp, Globe, Layers } from 'lucide-react';
+import ZhipuApiKeySettings from './ZhipuApiKeySettings';
 
 /**
  * 翻译引擎状态组件
@@ -163,6 +164,20 @@ const TranslationEngineStatus = ({
                       错误: {engine.lastCheck.error}
                     </div>
                   )}
+
+                  {/* 智谱 GLM API 密钥设置 */}
+                  {engine.key === 'zhipu' && (
+                    <div className="mt-2 pt-2 border-t border-gray-100">
+                      <ZhipuApiKeySettings 
+                        onApiKeyChange={() => {
+                          // API 密钥更新后刷新引擎状态
+                          if (onRefresh) {
+                            onRefresh();
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -248,4 +263,4 @@ const TranslationEngineStatus = ({
   );
 };
 
-export default TranslationEngineStatus; 
+export default TranslationEngineStatus;

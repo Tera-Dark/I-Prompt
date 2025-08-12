@@ -58,6 +58,20 @@ export const API_CONFIG = {
         'HTTP-Referer': window.location.origin, // OpenRouter要求的额外头
         'X-Title': 'I-Prompt Assistant'
       }
+    },
+    {
+      name: '智谱GLM',
+      provider: 'zhipu',
+      baseUrl: 'https://open.bigmodel.cn/api/paas/v4/',
+      apiKey: '', // 需要用户设置
+      model: 'glm-4-flash',
+      available: false, // 默认不可用，需要设置API密钥后才可用
+      priority: 6,
+      description: '智谱AI GLM-4-Flash模型，免费高质量AI生成',
+      requiresApiKey: true, // 标记需要用户设置API密钥
+      headers: {
+        'User-Agent': 'I-Prompt/3.0 Zhipu-API-Client'
+      }
     }
   ],
 
@@ -164,4 +178,4 @@ export const SUCCESS_MESSAGES = {
   GENERATION_SUCCESS: '提示词生成成功',
   UPLOAD_SUCCESS: '文件上传成功',
   SAVE_SUCCESS: '保存成功'
-}; 
+};
