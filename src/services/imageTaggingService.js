@@ -3,6 +3,8 @@
  * 调用本地Python后端 (与测试模块完全一致)
  */
 
+import { logger } from '../config/debug.js';
+
 // WD-Tagger 配置
 const WD_TAGGER_CONFIG = {
   // 根据环境选择API URL
@@ -160,14 +162,14 @@ const checkBackendHealth = async () => {
     
     if (response.ok) {
       const result = await response.json();
-      console.log('✅ Python后端连接正常:', result);
+      logger.api('✅ Python后端连接正常:', result);
       return true;
     } else {
-      console.log('⚠️ Python后端响应异常:', response.status);
+      logger.warn('⚠️ Python后端响应异常:', response.status);
       return false;
     }
   } catch (error) {
-    console.log('❌ Python后端连接失败:', error.message);
+    logger.error('❌ Python后端连接失败:', error.message);
     return false;
   }
 };
@@ -184,9 +186,9 @@ const callLocalBackend = async (imageFile, options = {}) => {
     characterMcut = false
   } = options;
 
-  console.log('🐍 调用本地Python后端...');
-  console.log(`🤖 模型: ${model}`);
-  console.log(`⚙️ 参数: 一般阈值=${generalThresh}, 角色阈值=${characterThresh}`);
+  logger.api('🐍 调用本地Python后端...');
+  logger.api(`🤖 模型: ${model}`);
+  logger.api(`⚙️ 参数: 一般阈值=${generalThresh}, 角色阈值=${characterThresh}`);
 
   try {
     // 创建FormData (完全按照测试模块的参数名称)
@@ -206,7 +208,7 @@ const callLocalBackend = async (imageFile, options = {}) => {
 
     if (response.ok) {
       const result = await response.json();
-      console.log('✅ 本地后端调用成功');
+      logger.api('✅ 本地后端调用成功');
       return result;
     } else {
       const errorData = await response.json();
@@ -214,7 +216,7 @@ const callLocalBackend = async (imageFile, options = {}) => {
     }
 
   } catch (error) {
-    console.error('❌ 本地后端调用失败:', error);
+    logger.error('❌ 本地后端调用失败:', error);
     throw new Error(`本地后端调用失败: ${error.message}`);
   }
 };
@@ -223,7 +225,7 @@ const callLocalBackend = async (imageFile, options = {}) => {
  * 主要的图像标签识别函数
  */
 export const analyzeImageTags = async (file, options = {}) => {
-  console.log('🖼️ [imageTaggingService] 开始图像标签识别');
+  logger.api('🖼️ [imageTaggingService] 开始图像标签识别');
   
   try {
     // 1. 验证文件
@@ -233,7 +235,7 @@ export const analyzeImageTags = async (file, options = {}) => {
     }
     
     // 2. 检查本地后端状态
-    console.log('🔍 检查本地Python后端状态...');
+    logger.api('🔍 检查本地Python后端状态...');
     const backendOnline = await checkBackendHealth();
     
     if (!backendOnline) {
@@ -241,7 +243,7 @@ export const analyzeImageTags = async (file, options = {}) => {
     }
     
     // 3. 调用本地Python后端
-    console.log('🐍 使用本地Python后端...');
+    logger.api('🐍 使用本地Python后端...');
     const result = await callLocalBackend(file, options);
     
     if (!result || !result.success) {
@@ -263,7 +265,7 @@ export const analyzeImageTags = async (file, options = {}) => {
                      (processedData.artist?.length || 0) + 
                      (processedData.meta?.length || 0);
     
-    console.log(`✅ 成功识别到 ${totalTags} 个标签`);
+    logger.api(`✅ 成功识别到 ${totalTags} 个标签`);
     
     return {
       success: true,
@@ -275,7 +277,7 @@ export const analyzeImageTags = async (file, options = {}) => {
     };
 
   } catch (error) {
-    console.error('❌ 图像标签识别失败:', error);
+    logger.error('❌ 图像标签识别失败:', error);
     
     return {
       success: false,

@@ -1,3 +1,5 @@
+import { logger } from '../config/debug.js';
+
 /**
  * 复制文本到剪贴板
  * @param {string} text - 要复制的文本
@@ -27,7 +29,7 @@ export const copyToClipboard = async (text) => {
     
     return success;
   } catch (error) {
-    console.error('复制失败:', error);
+    logger.error('复制失败:', error);
     return false;
   }
 };
@@ -44,7 +46,7 @@ export const readFromClipboard = async () => {
     }
     return null;
   } catch (error) {
-    console.error('读取剪贴板失败:', error);
+    logger.error('读取剪贴板失败:', error);
     return null;
   }
-}; 
+};

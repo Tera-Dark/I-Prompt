@@ -3,6 +3,8 @@
  * 用于保存提示词生成结果、输入历史和用户偏好
  */
 
+import { logger } from '../config/debug.js';
+
 const STORAGE_KEYS = {
   GENERATED_PROMPTS: 'i_prompt_generated_prompts',
   INPUT_HISTORY: 'i_prompt_input_history',
@@ -26,7 +28,7 @@ class PersistentStorage {
       localStorage.removeItem(test);
       return true;
     } catch (e) {
-      console.warn('LocalStorage不支持，数据不会持久化');
+      logger.warn('LocalStorage不支持，数据不会持久化');
       return false;
     }
   }
@@ -38,7 +40,7 @@ class PersistentStorage {
     try {
       return JSON.stringify(data);
     } catch (error) {
-      console.error('JSON序列化失败:', error);
+      logger.error('JSON序列化失败:', error);
       return null;
     }
   }
@@ -50,7 +52,7 @@ class PersistentStorage {
     try {
       return JSON.parse(jsonString);
     } catch (error) {
-      console.error('JSON解析失败:', error);
+      logger.error('JSON解析失败:', error);
       return null;
     }
   }
@@ -85,7 +87,7 @@ class PersistentStorage {
       // 同时保存到会话记录
       this.saveGenerationSession(data);
       
-      console.log('✅ 提示词已保存到本地存储:', sessionId);
+      logger.ui('✅ 提示词已保存到本地存储:', sessionId);
       return sessionId;
     } catch (error) {
       console.error('保存生成提示词失败:', error);
@@ -432,4 +434,4 @@ export const {
   importData
 } = persistentStorage;
 
-export default persistentStorage; 
+export default persistentStorage;

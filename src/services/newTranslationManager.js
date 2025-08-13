@@ -5,6 +5,7 @@
  */
 
 import zhipuTranslationService from './zhipuTranslationService.js';
+import { logger } from '../config/debug.js';
 
 // 翻译引擎配置 - 智谱GLM为主，传统API为备用
 export const TRANSLATION_ENGINES = {
@@ -93,8 +94,8 @@ class NewTranslationManager {
     this.fallbackAttempts = 0;
     this.maxFallbackAttempts = 3;
     
-    console.log('🚀 [NewTranslationManager] 新一代翻译管理器初始化完成');
-    console.log('🤖 [NewTranslationManager] 主引擎: 智谱GLM (免费AI翻译)');
+    logger.translation('🚀 [NewTranslationManager] 新一代翻译管理器初始化完成');
+    logger.translation('🤖 [NewTranslationManager] 主引擎: 智谱GLM (免费AI翻译)');
     
     this.initializeEngines();
   }
@@ -106,17 +107,17 @@ class NewTranslationManager {
   setZhipuApiKey(apiKey) {
     try {
       this.zhipuService.setApiKey(apiKey);
-      console.log('✅ [NewTranslationManager] 智谱API密钥已设置');
+      logger.translation('✅ [NewTranslationManager] 智谱API密钥已设置');
       
       // 重新检查智谱健康状态
       this.checkZhipuHealth().then(isHealthy => {
         this.healthStatus.zhipu = isHealthy;
-        console.log('🔍 [NewTranslationManager] 智谱健康状态更新:', isHealthy);
+        logger.translation('🔍 [NewTranslationManager] 智谱健康状态更新:', isHealthy);
       });
       
       return true;
     } catch (error) {
-      console.error('❌ [NewTranslationManager] 设置智谱API密钥失败:', error);
+      logger.error('❌ [NewTranslationManager] 设置智谱API密钥失败:', error);
       return false;
     }
   }
@@ -136,7 +137,7 @@ class NewTranslationManager {
   async checkZhipuHealth() {
     try {
       if (!this.zhipuService.hasApiKey()) {
-        console.log('⚠️ [NewTranslationManager] 智谱GLM未设置API密钥');
+        logger.warn('⚠️ [NewTranslationManager] 智谱GLM未设置API密钥');
         return false;
       }
       
@@ -144,10 +145,10 @@ class NewTranslationManager {
       const testResult = await this.zhipuService.translate('test', 'zh', 'en');
       const isHealthy = testResult && testResult.status === 'success';
       
-      console.log(`${isHealthy ? '✅' : '❌'} [NewTranslationManager] 智谱GLM健康检查: ${isHealthy ? '正常' : '异常'}`);
+      logger.translation(`${isHealthy ? '✅' : '❌'} [NewTranslationManager] 智谱GLM健康检查: ${isHealthy ? '正常' : '异常'}`);
       return isHealthy;
     } catch (error) {
-      console.warn('⚠️ [NewTranslationManager] 智谱GLM健康检查失败:', error.message);
+      logger.warn('⚠️ [NewTranslationManager] 智谱GLM健康检查失败:', error.message);
       return false;
     }
   }
@@ -156,13 +157,13 @@ class NewTranslationManager {
    * 初始化翻译引擎
    */
   async initializeEngines() {
-    console.log('🔧 [NewTranslationManager] 初始化翻译引擎...');
+    logger.translation('🔧 [NewTranslationManager] 初始化翻译引擎...');
     
     // 检查智谱GLM可用性
     try {
       this.healthStatus.zhipu = await this.checkZhipuHealth();
     } catch (error) {
-      console.warn('⚠️ [NewTranslationManager] 智谱GLM初始化失败:', error.message);
+      logger.warn('⚠️ [NewTranslationManager] 智谱GLM初始化失败:', error.message);
       this.healthStatus.zhipu = false;
     }
     
@@ -173,7 +174,7 @@ class NewTranslationManager {
       }
     });
     
-    console.log('✅ [NewTranslationManager] 引擎初始化完成:', this.healthStatus);
+    logger.translation('✅ [NewTranslationManager] 引擎初始化完成:', this.healthStatus);
   }
 
 
@@ -211,7 +212,7 @@ class NewTranslationManager {
    */
   async translateWithZhipu(text, targetLang, sourceLang = 'auto') {
     try {
-      console.log(`🤖 [NewTranslationManager] 使用智谱GLM翻译`);
+      logger.translation(`🤖 [NewTranslationManager] 使用智谱GLM翻译`);
       const result = await this.zhipuService.translate(text, targetLang, sourceLang);
       
       // 重置回退计数
@@ -219,7 +220,7 @@ class NewTranslationManager {
       
       return result;
     } catch (error) {
-      console.error('❌ [NewTranslationManager] 智谱GLM翻译失败:', error.message);
+      logger.error('❌ [NewTranslationManager] 智谱GLM翻译失败:', error.message);
       throw error;
     }
   }
@@ -229,7 +230,7 @@ class NewTranslationManager {
    */
   async translateWithFallback(text, targetLang, sourceLang = 'auto', engineKey = 'google') {
     try {
-      console.log(`🔄 [NewTranslationManager] 使用备用引擎: ${this.engines[engineKey]?.name}`);
+      logger.translation(`🔄 [NewTranslationManager] 使用备用引擎: ${this.engines[engineKey]?.name}`);
       
       const detectedLang = sourceLang === 'auto' ? this.detectLanguage(text) : sourceLang;
       const sourceCode = LANGUAGE_MAPPING[detectedLang]?.[engineKey] || detectedLang;
@@ -272,7 +273,7 @@ class NewTranslationManager {
       
       throw new Error('翻译结果为空');
     } catch (error) {
-      console.error(`❌ [NewTranslationManager] ${engineKey} 翻译失败:`, error.message);
+      logger.error(`❌ [NewTranslationManager] ${engineKey} 翻译失败:`, error.message);
       throw error;
     }
   }
@@ -289,7 +290,7 @@ class NewTranslationManager {
     const cacheKey = `${text}_${sourceLang}_${targetLang}`;
     if (this.translationCache.has(cacheKey)) {
       const cached = this.translationCache.get(cacheKey);
-      console.log('💾 [NewTranslationManager] 使用缓存结果');
+      logger.translation('💾 [NewTranslationManager] 使用缓存结果');
       return { ...cached, fromCache: true };
     }
 
@@ -300,16 +301,16 @@ class NewTranslationManager {
     if (this.engines.zhipu.available && this.fallbackAttempts < this.maxFallbackAttempts) {
       try {
         result = await this.translateWithZhipu(text, targetLang, sourceLang);
-        console.log('✅ [NewTranslationManager] 智谱GLM翻译成功');
+        logger.translation('✅ [NewTranslationManager] 智谱GLM翻译成功');
       } catch (error) {
         lastError = error;
         this.fallbackAttempts++;
-        console.warn(`⚠️ [NewTranslationManager] 智谱GLM翻译失败 (${this.fallbackAttempts}/${this.maxFallbackAttempts}):`, error.message);
+        logger.warn(`⚠️ [NewTranslationManager] 智谱GLM翻译失败 (${this.fallbackAttempts}/${this.maxFallbackAttempts}):`, error.message);
         
         // 如果是API Key问题，标记为不可用
         if (error.message.includes('API Key') || error.message.includes('401') || error.message.includes('403')) {
           this.engines.zhipu.available = false;
-          console.warn('🔑 [NewTranslationManager] 智谱GLM API Key问题，切换到备用引擎');
+          logger.warn('🔑 [NewTranslationManager] 智谱GLM API Key问题，切换到备用引擎');
         }
       }
     }
@@ -323,11 +324,11 @@ class NewTranslationManager {
         
         try {
           result = await this.translateWithFallback(text, targetLang, sourceLang, engineKey);
-          console.log(`✅ [NewTranslationManager] 备用引擎 ${this.engines[engineKey].name} 翻译成功`);
+          logger.translation(`✅ [NewTranslationManager] 备用引擎 ${this.engines[engineKey].name} 翻译成功`);
           break;
         } catch (error) {
           lastError = error;
-          console.warn(`⚠️ [NewTranslationManager] 备用引擎 ${this.engines[engineKey].name} 失败:`, error.message);
+          logger.warn(`⚠️ [NewTranslationManager] 备用引擎 ${this.engines[engineKey].name} 失败:`, error.message);
           this.engines[engineKey].available = false;
         }
       }
@@ -356,16 +357,16 @@ class NewTranslationManager {
       throw new Error('批量翻译内容不能为空');
     }
 
-    console.log(`🔄 [NewTranslationManager] 开始批量翻译 ${texts.length} 条内容`);
+    logger.translation(`🔄 [NewTranslationManager] 开始批量翻译 ${texts.length} 条内容`);
 
     // 优先使用智谱GLM的批量翻译
     if (this.engines.zhipu.available) {
       try {
         const results = await this.zhipuService.batchTranslate(texts, targetLang, sourceLang);
-        console.log('✅ [NewTranslationManager] 智谱GLM批量翻译完成');
+        logger.translation('✅ [NewTranslationManager] 智谱GLM批量翻译完成');
         return results;
       } catch (error) {
-        console.warn('⚠️ [NewTranslationManager] 智谱GLM批量翻译失败，使用逐个翻译:', error.message);
+        logger.warn('⚠️ [NewTranslationManager] 智谱GLM批量翻译失败，使用逐个翻译:', error.message);
       }
     }
 
@@ -394,7 +395,7 @@ class NewTranslationManager {
       }
     }
 
-    console.log(`✅ [NewTranslationManager] 批量翻译完成: ${results.filter(r => r.status === 'success').length}/${texts.length} 成功`);
+    logger.translation(`✅ [NewTranslationManager] 批量翻译完成: ${results.filter(r => r.status === 'success').length}/${texts.length} 成功`);
     return results;
   }
 
@@ -407,7 +408,7 @@ class NewTranslationManager {
 
     const startTime = Date.now();
     try {
-      console.log(`🔍 [NewTranslationManager] 检查 ${engine.name} 健康状态`);
+      logger.translation(`🔍 [NewTranslationManager] 检查 ${engine.name} 健康状态`);
       
       let testResult;
       if (engineKey === 'zhipu') {
@@ -428,7 +429,7 @@ class NewTranslationManager {
 
       engine.available = isHealthy;
       
-      console.log(`${isHealthy ? '✅' : '❌'} [NewTranslationManager] ${engine.name} 健康检查完成: ${responseTime}ms`);
+      logger.translation(`${isHealthy ? '✅' : '❌'} [NewTranslationManager] ${engine.name} 健康检查完成: ${responseTime}ms`);
       
       return isHealthy;
     } catch (error) {
@@ -442,7 +443,7 @@ class NewTranslationManager {
       };
 
       engine.available = false;
-      console.log(`❌ [NewTranslationManager] ${engine.name} 健康检查失败: ${error.message}`);
+      logger.error(`❌ [NewTranslationManager] ${engine.name} 健康检查失败: ${error.message}`);
       
       return false;
     }
@@ -464,14 +465,14 @@ class NewTranslationManager {
       this.checkAllEnginesHealth();
     }, 10 * 60 * 1000);
 
-    console.log('🩺 [NewTranslationManager] 健康检查服务已启动');
+    logger.translation('🩺 [NewTranslationManager] 健康检查服务已启动');
   }
 
   /**
    * 检查所有引擎健康状态
    */
   async checkAllEnginesHealth() {
-    console.log('🔄 [NewTranslationManager] 开始全面健康检查...');
+    logger.translation('🔄 [NewTranslationManager] 开始全面健康检查...');
     
     const healthPromises = Object.keys(this.engines).map(key => 
       this.checkEngineHealth(key)
@@ -480,7 +481,7 @@ class NewTranslationManager {
     await Promise.allSettled(healthPromises);
     
     const availableCount = Object.values(this.engines).filter(engine => engine.available).length;
-    console.log(`📊 [NewTranslationManager] 健康检查完成，可用引擎: ${availableCount}/${Object.keys(this.engines).length}`);
+    logger.translation(`📊 [NewTranslationManager] 健康检查完成，可用引擎: ${availableCount}/${Object.keys(this.engines).length}`);
     
     // 重置回退计数
     this.fallbackAttempts = 0;
@@ -530,7 +531,7 @@ class NewTranslationManager {
     this.currentEngine = engineKey;
     const newEngine = this.engines[this.currentEngine].name;
     
-    console.log(`🔄 [NewTranslationManager] 手动切换引擎: ${oldEngine} -> ${newEngine}`);
+    logger.translation(`🔄 [NewTranslationManager] 手动切换引擎: ${oldEngine} -> ${newEngine}`);
     
     return this.getCurrentEngine();
   }
@@ -541,7 +542,7 @@ class NewTranslationManager {
   clearCache() {
     this.translationCache.clear();
     this.zhipuService.clearCache();
-    console.log('🗑️ [NewTranslationManager] 所有翻译缓存已清理');
+    logger.translation('🗑️ [NewTranslationManager] 所有翻译缓存已清理');
   }
 
   /**
@@ -551,7 +552,7 @@ class NewTranslationManager {
     if (this.healthCheckInterval) {
       clearInterval(this.healthCheckInterval);
       this.healthCheckInterval = null;
-      console.log('🛑 [NewTranslationManager] 健康检查服务已停止');
+      logger.translation('🛑 [NewTranslationManager] 健康检查服务已停止');
     }
   }
 }

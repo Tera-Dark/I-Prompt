@@ -1,4 +1,5 @@
 import { API_CONFIG } from '../constants/config';
+import { logger } from '../config/debug.js';
 
 /**
  * AI智能提示词生成服务
@@ -82,7 +83,7 @@ Output Tags (comma-separated English tags only):`;
       }
       
     } catch (error) {
-      console.error('AI生成失败:', error);
+      logger.error('AI生成失败:', error);
       throw error;
     }
   }
@@ -112,4 +113,4 @@ Output Tags (comma-separated English tags only):`;
   }
 }
 
-export default new AIService(); 
+export default new AIService();

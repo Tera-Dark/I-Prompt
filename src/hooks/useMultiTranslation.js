@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import multiTranslationManager from '../services/newTranslationManager';
+import translationManager from '../services/newTranslationManager';
 
 /**
  * 多引擎翻译Hook
@@ -14,13 +14,13 @@ export const useMultiTranslation = () => {
   // 初始化
   useEffect(() => {
     // 设置引擎切换监听
-    multiTranslationManager.onEngineSwitch = (newEngine, oldEngine) => {
+    translationManager.onEngineSwitch = (newEngine, oldEngine) => {
       setCurrentEngine(newEngine);
       console.log(`🔄 [Hook] 翻译引擎已切换: ${oldEngine} -> ${newEngine.name}`);
     };
 
     // 获取初始引擎信息
-    setCurrentEngine(multiTranslationManager.getCurrentEngine());
+    setCurrentEngine(translationManager.getCurrentEngine());
   }, []);
 
   /**
@@ -36,7 +36,7 @@ export const useMultiTranslation = () => {
     setTranslationError(null);
 
     try {
-      const result = await multiTranslationManager.smartTranslate(text, targetLang, sourceLang);
+      const result = await translationManager.smartTranslate(text, targetLang, sourceLang);
       
       // 添加到历史记录
       const historyItem = {
@@ -81,7 +81,7 @@ export const useMultiTranslation = () => {
         const text = texts[i];
         if (text && text.trim()) {
           try {
-            const result = await multiTranslationManager.smartTranslate(text, targetLang, sourceLang);
+            const result = await translationManager.smartTranslate(text, targetLang, sourceLang);
             results.push({
               index: i,
               original: text,
@@ -129,7 +129,7 @@ export const useMultiTranslation = () => {
    * 获取引擎状态
    */
   const getEngineStatus = useCallback(() => {
-    return multiTranslationManager.getStatusReport();
+    return translationManager.getStatusReport();
   }, []);
 
   /**
@@ -137,7 +137,7 @@ export const useMultiTranslation = () => {
    */
   const switchEngine = useCallback((engineKey) => {
     try {
-      const newEngine = multiTranslationManager.switchEngine(engineKey);
+      const newEngine = translationManager.switchEngine(engineKey);
       setCurrentEngine(newEngine);
       setTranslationError(null);
       return newEngine;
@@ -151,21 +151,21 @@ export const useMultiTranslation = () => {
    * 获取所有可用引擎
    */
   const getAllEngines = useCallback(() => {
-    return multiTranslationManager.getAllEngines();
+    return translationManager.getAllEngines();
   }, []);
 
   /**
    * 检测语言
    */
   const detectLanguage = useCallback((text) => {
-    return multiTranslationManager.detectLanguage(text);
+    return translationManager.detectLanguage(text);
   }, []);
 
   /**
    * 清理翻译缓存
    */
   const clearCache = useCallback(() => {
-    multiTranslationManager.clearCache();
+    translationManager.clearCache();
     setTranslationHistory([]);
   }, []);
 
@@ -174,8 +174,8 @@ export const useMultiTranslation = () => {
    */
   const refreshEngines = useCallback(async () => {
     try {
-      await multiTranslationManager.checkAllEnginesHealth();
-      setCurrentEngine(multiTranslationManager.getCurrentEngine());
+      await translationManager.checkAllEnginesHealth();
+      setCurrentEngine(translationManager.getCurrentEngine());
     } catch (error) {
       console.error('刷新引擎状态失败:', error);
     }

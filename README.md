@@ -73,10 +73,11 @@ AI扩写：masterpiece, best quality, ultra detailed, cute cat girl, white dress
 
 ### 🚀 最新更新 (2025年版本)
 
-#### 📝 翻译功能全面升级
-- **🌐 多引擎翻译系统**：基于Python translators库，支持Google、Bing、百度、有道、阿里等翻译引擎
+#### 📝 智能翻译系统全面升级
+- **🤖 智谱GLM AI翻译**：基于智谱AI GLM-4-Flash模型，提供免费高质量AI翻译
+- **🌐 多引擎备用系统**：智谱GLM为主，Google、Bing、百度、有道、阿里等作为备用
 - **🎯 AI绘画专业词典**：内置200+专业术语，确保翻译准确性
-- **⚡ 智能降级机制**：自动选择可用引擎，确保翻译成功率
+- **⚡ 智能降级机制**：AI翻译失败时自动切换传统引擎，确保翻译成功率
 - **🔄 实时翻译预览**：支持自动翻译和手动编辑
 - **📊 翻译质量监控**：显示翻译覆盖率、成功率等统计信息
 
@@ -89,19 +90,22 @@ AI扩写：masterpiece, best quality, ultra detailed, cute cat girl, white dress
 #### 🔧 技术特性
 
 **支持的翻译引擎：**
-- **Google翻译** - 支持134种语言，质量高
-- **Bing翻译** - 微软翻译，稳定可靠
-- **百度翻译** - 支持201种语言，中文效果好
-- **有道翻译** - 支持114种语言，中文翻译质量高
-- **阿里翻译** - 支持221种语言，专业领域翻译
-- **MyMemory** - 免费翻译服务，支持多种语言
+- **智谱GLM** - 智谱AI GLM-4-Flash模型，免费高质量AI翻译（主要）
+- **Google翻译** - 支持134种语言，质量高（备用）
+- **Bing翻译** - 微软翻译，稳定可靠（备用）
+- **百度翻译** - 支持201种语言，中文效果好（备用）
+- **有道翻译** - 支持114种语言，中文翻译质量高（备用）
+- **阿里翻译** - 支持221种语言，专业领域翻译（备用）
+- **MyMemory** - 免费翻译服务，支持多种语言（备用）
 
 **智能特性：**
-- 🧠 **智能引擎选择**：根据文本类型和可用性自动选择最佳引擎
-- 🔄 **自动重试机制**：失败时自动切换引擎重试
+- 🤖 **AI优先翻译**：智谱GLM AI翻译为主，理解上下文，翻译更准确
+- 🧠 **智能引擎选择**：AI翻译失败时根据文本类型自动选择最佳备用引擎
+- 🔄 **自动重试机制**：失败时自动切换引擎重试，确保翻译成功
 - 📚 **专业词典降级**：在线翻译失败时使用内置AI绘画词典
 - ⚡ **批量翻译优化**：支持并发翻译，智能限流避免被封
 - 🎯 **语言自动检测**：自动识别源语言类型
+- 🔑 **API密钥管理**：支持智谱GLM API密钥配置，免费使用AI翻译
 
 ## 🚀 快速开始
 
@@ -187,7 +191,8 @@ src/
 │   ├── AdvancedPromptEditor.jsx    # 高级提示词编辑器
 │   └── ...
 ├── services/           # 服务层
-│   ├── translationService.js     # 多引擎翻译服务
+│   ├── newTranslationManager.js  # 智能翻译管理器
+│   ├── zhipuTranslationService.js # 智谱GLM翻译服务
 │   └── imageMetadataService.js   # 图像元数据服务
 ├── hooks/              # React Hooks
 │   └── usePromptGenerator.js     # DeepSeek AI生成Hook
@@ -296,23 +301,29 @@ export const API_CONFIG = {
 };
 ```
 
-### 多引擎翻译API
+### 智能翻译API
 ```javascript
-// src/services/translationService.js
-// 支持多种免费翻译API
-// - MyMemory (主推荐) - 每日1000次免费
-// - LibreTranslate (开源) - 完全免费
-// - Google Web (稳定) - 非官方免费
+// src/services/newTranslationManager.js + zhipuTranslationService.js
+// 智谱GLM AI翻译为主，传统API为备用
+// - 智谱GLM (主要) - 免费AI翻译，理解上下文
+// - MyMemory (备用) - 每日1000次免费
+// - LibreTranslate (备用) - 完全免费
+// - Google Web (备用) - 非官方免费
 // - 内置AI词典 (离线) - 200+专业术语
 ```
 
 ### API密钥获取
-1. **硅基流动API**
+1. **硅基流动API** (DeepSeek AI生成)
    - 访问：https://siliconflow.cn
    - 注册账号并获取免费额度
    - 复制API密钥到配置文件
 
-2. **翻译API**
+2. **智谱GLM API** (AI翻译)
+   - 访问：https://open.bigmodel.cn
+   - 注册账号并获取免费额度
+   - 在应用设置页面配置API密钥
+
+3. **传统翻译API** (备用)
    - MyMemory：https://mymemory.translated.net/doc/
    - LibreTranslate：https://libretranslate.com/
    - 大部分为免费服务，无需密钥
@@ -1957,4 +1968,4 @@ Made with ❤️ by I-Prompt Team
 
 **立即体验智能提示词库 3.0，让AI绘画创作更简单！**
 
-支持中文输入 → 自动翻译 → 专业输出 → 一键复制 → 开始创作 
+支持中文输入 → 自动翻译 → 专业输出 → 一键复制 → 开始创作

@@ -7,6 +7,7 @@ import {
   Download 
 } from 'lucide-react';
 import { tagDatabaseService } from '../../services/tagDatabaseService';
+import { logger } from '../../config/debug.js';
 
 /**
  * 完善的库管理组件
@@ -61,7 +62,7 @@ const LibraryManager = ({ onClose, onLibraryUpdate }) => {
       
       showMessage('success', '库导出成功！文件已下载到本地。');
     } catch (error) {
-      console.error('导出失败:', error);
+      logger.error('导出失败:', error);
       showMessage('error', '导出失败：' + error.message);
     }
   };
@@ -84,7 +85,7 @@ const LibraryManager = ({ onClose, onLibraryUpdate }) => {
       
       showMessage('success', '用户库导出成功！');
     } catch (error) {
-      console.error('导出用户库失败:', error);
+      logger.error('导出用户库失败:', error);
       showMessage('error', '导出失败：' + error.message);
     }
   };
@@ -168,7 +169,7 @@ const LibraryManager = ({ onClose, onLibraryUpdate }) => {
         throw new Error('导入过程中发生错误');
       }
     } catch (error) {
-      console.error('导入失败:', error);
+      logger.error('导入失败:', error);
       showMessage('error', '导入失败：' + error.message);
     } finally {
       setIsProcessing(false);
@@ -489,4 +490,4 @@ const LibraryManager = ({ onClose, onLibraryUpdate }) => {
   );
 };
 
-export default LibraryManager; 
+export default LibraryManager;

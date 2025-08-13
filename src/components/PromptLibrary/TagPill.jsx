@@ -3,6 +3,7 @@ import {
   X, Eye, EyeOff, Copy, Heart, Languages, 
   Plus, Minus, RotateCcw
 } from 'lucide-react';
+import { logger } from '../../config/debug';
 
 export default function TagPill(props) {
   const {
@@ -132,7 +133,10 @@ export default function TagPill(props) {
   const handleMouseLeave = (e) => {
     // 检查鼠标是否移到了控制栏
     const relatedTarget = e.relatedTarget;
-    if (relatedTarget && controlsRef.current && controlsRef.current.contains(relatedTarget)) {
+    if (relatedTarget && 
+        relatedTarget instanceof Node && 
+        controlsRef.current && 
+        controlsRef.current.contains(relatedTarget)) {
       return; // 不隐藏控制栏
     }
     
@@ -153,7 +157,10 @@ export default function TagPill(props) {
   const handleControlsMouseLeave = (e) => {
     // 检查鼠标是否回到了主容器
     const relatedTarget = e.relatedTarget;
-    if (relatedTarget && containerRef.current && containerRef.current.contains(relatedTarget)) {
+    if (relatedTarget && 
+        relatedTarget instanceof Node && 
+        containerRef.current && 
+        containerRef.current.contains(relatedTarget)) {
       return; // 不隐藏控制栏
     }
     
@@ -201,7 +208,7 @@ export default function TagPill(props) {
         if (brackets > 0 && onAdjustBrackets) onAdjustBrackets(index, bracketType, -brackets);
         break;
       default:
-        console.warn('Unknown action:', action);
+        logger.warn('Unknown action:', action);
     }
   };
 
@@ -268,15 +275,15 @@ export default function TagPill(props) {
       const doTranslation = async () => {
         try {
           if (onTranslate) {
-            console.log(`🏷️ [TagPill] 开始翻译标签: "${text}"`);
+            logger.translation(`🏷️ [TagPill] 开始翻译标签: "${text}"`);
             const result = await onTranslate(text);
             
             if (result?.translatedText) {
-              console.log(`📝 [TagPill] 原始翻译结果: "${result.translatedText}"`);
+              logger.translation(`📝 [TagPill] 原始翻译结果: "${result.translatedText}"`);
               
               // 使用统一的清理函数
               const cleanTranslation = cleanTranslationResult(result.translatedText);
-              console.log(`✨ [TagPill] 清理后结果: "${cleanTranslation}"`);
+              logger.translation(`✨ [TagPill] 清理后结果: "${cleanTranslation}"`);
               
               // 验证翻译质量
               if (cleanTranslation && 
@@ -286,14 +293,14 @@ export default function TagPill(props) {
                 if (onTranslationUpdate) {
                   onTranslationUpdate(text, cleanTranslation);
                 }
-                console.log(`✅ [TagPill] 翻译成功: ${text} → ${cleanTranslation}`);
+                logger.translation(`✅ [TagPill] 翻译成功: ${text} → ${cleanTranslation}`);
               } else {
-                console.log(`⚠️ [TagPill] 翻译质量不合格，不显示翻译`);
+                logger.translation(`⚠️ [TagPill] 翻译质量不合格，不显示翻译`);
               }
             }
           }
         } catch (error) {
-          console.error('❌ [TagPill] 翻译失败:', error);
+          logger.error('❌ [TagPill] 翻译失败:', error);
         } finally {
           setIsLoadingTranslation(false);
         }
@@ -522,4 +529,4 @@ export default function TagPill(props) {
       )}
     </div>
   );
-} 
+}

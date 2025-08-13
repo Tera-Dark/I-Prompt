@@ -359,51 +359,10 @@ export function getTemporaryStatesHooks() {
   };
 }
 
-// 为了向后兼容，保留旧的函数名，但标记为废弃
-/**
- * @deprecated 请使用 getSessionStatesHooks() 
- */
-export const useSessionStates = getSessionStatesHooks;
-
-/**
- * @deprecated 请使用 getPersistentStatesHooks()
- */
-export const usePersistentStates = getPersistentStatesHooks;
-
-/**
- * @deprecated 请使用 getTemporaryStatesHooks()
- */
-export const useTemporaryStates = getTemporaryStatesHooks;
-
-/**
- * 批量状态管理Hook
- * 注意：此Hook已被废弃，因为它违反了Hook的规则
- * 请使用单独的Hook或组合Hook函数
- */
-export function useBatchStorageState(stateDefinitions) {
-  console.warn('useBatchStorageState已被废弃，请使用单独的Hook函数');
-  
-  // 返回空对象以保持向后兼容
-  return {};
-}
-
-/**
- * 批量状态创建工厂函数 (非Hook)
- * 用于生成多个状态Hook的配置
- * 注意：此函数已被废弃，建议直接使用单独的Hook
- */
-export function createBatchStorageStates(stateDefinitions) {
-  console.warn('createBatchStorageStates已被废弃，请直接使用单独的Hook函数');
-  
-  const hookCreators = {};
-  
-  Object.entries(stateDefinitions).forEach(([name, definition]) => {
-    // 只返回配置，不创建实际的Hook函数
-    hookCreators[name] = definition;
-  });
-  
-  return hookCreators;
-}
+// 弃用的函数已被移除，请使用对应的新函数：
+// - getSessionStatesHooks()
+// - getPersistentStatesHooks() 
+// - getTemporaryStatesHooks()
 
 /**
  * 存储同步Hook - 用于组件间数据同步
@@ -488,4 +447,4 @@ function compareVersions(version1, version2) {
   }
   
   return 0;
-} 
+}

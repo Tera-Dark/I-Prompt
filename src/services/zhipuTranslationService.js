@@ -4,6 +4,7 @@
  */
 
 import { zhipuConfigManager } from '../config/zhipuConfig.js';
+import { logger } from '../config/debug.js';
 
 // 支持的语言映射
 const LANGUAGE_MAPPING = {
@@ -29,12 +30,14 @@ const LANGUAGE_MAPPING = {
 class ZhipuTranslationService {
   constructor() {
     this.cache = new Map();
+    this.translationCache = new Map(); // 添加翻译缓存
     this.requestQueue = [];
     this.isProcessing = false;
     this.lastRequestTime = 0;
     this.requestCount = 0;
     this.rateLimitWindow = 60000; // 1分钟
     this.maxRequestsPerMinute = 60;
+    this.config = zhipuConfigManager.getConfig(); // 添加配置引用
   }
 
   /**
@@ -43,7 +46,8 @@ class ZhipuTranslationService {
    */
   setApiKey(apiKey) {
     zhipuConfigManager.setApiKey(apiKey);
-    console.log('✅ [ZhipuTranslation] API密钥已设置');
+    this.config = zhipuConfigManager.getConfig(); // 更新内部配置
+    logger.translation('✅ [ZhipuTranslation] API密钥已设置');
   }
 
   /**
@@ -153,7 +157,7 @@ ${text}
         const translatedText = data.choices[0].message.content.trim();
         this.requestCount++;
         
-        console.log(`✅ [ZhipuTranslation] 翻译成功 (请求次数: ${this.requestCount})`);
+        logger.translation(`✅ [ZhipuTranslation] 翻译成功 (请求次数: ${this.requestCount})`);
         return {
           success: true,
           translatedText,
@@ -163,7 +167,7 @@ ${text}
         throw new Error('智谱API返回格式错误');
       }
     } catch (error) {
-      console.error('❌ [ZhipuTranslation] API调用失败:', error);
+      logger.error('❌ [ZhipuTranslation] API调用失败:', error);
       throw error;
     }
   }
@@ -184,7 +188,7 @@ ${text}
     const cacheKey = `${text}_${sourceLang}_${targetLang}`;
     if (this.translationCache.has(cacheKey)) {
       const cached = this.translationCache.get(cacheKey);
-      console.log('💾 [ZhipuTranslation] 使用缓存结果');
+      logger.translation('💾 [ZhipuTranslation] 使用缓存结果');
       return { ...cached, fromCache: true };
     }
 
@@ -205,7 +209,7 @@ ${text}
         };
       }
 
-      console.log(`🤖 [ZhipuTranslation] 开始翻译: "${text}" (${detectedLang} → ${targetLang})`);
+      logger.translation(`🤖 [ZhipuTranslation] 开始翻译: "${text}" (${detectedLang} → ${targetLang})`);
 
       // 构建翻译提示词
       const prompt = this.buildTranslationPrompt(text, targetLang, detectedLang);
@@ -239,7 +243,7 @@ ${text}
         throw new Error('翻译失败');
       }
     } catch (error) {
-      console.error('❌ [ZhipuTranslation] 翻译失败:', error);
+      logger.error('❌ [ZhipuTranslation] 翻译失败:', error);
       throw new Error(`智谱GLM翻译失败: ${error.message}`);
     }
   }
@@ -252,7 +256,7 @@ ${text}
       throw new Error('批量翻译内容不能为空');
     }
 
-    console.log(`🔄 [ZhipuTranslation] 开始批量翻译 ${texts.length} 条内容`);
+    logger.translation(`🔄 [ZhipuTranslation] 开始批量翻译 ${texts.length} 条内容`);
 
     const results = [];
     for (let i = 0; i < texts.length; i++) {
@@ -278,7 +282,7 @@ ${text}
       }
     }
 
-    console.log(`✅ [ZhipuTranslation] 批量翻译完成: ${results.filter(r => r.status === 'success').length}/${texts.length} 成功`);
+    logger.translation(`✅ [ZhipuTranslation] 批量翻译完成: ${results.filter(r => r.status === 'success').length}/${texts.length} 成功`);
     return results;
   }
 
@@ -312,7 +316,7 @@ ${text}
    */
   clearCache() {
     this.translationCache.clear();
-    console.log('🗑️ [ZhipuTranslation] 翻译缓存已清除');
+    logger.translation('🗑️ [ZhipuTranslation] 翻译缓存已清除');
   }
 }
 

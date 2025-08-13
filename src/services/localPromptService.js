@@ -1,5 +1,6 @@
 import { PAINTING_STYLES } from '../constants/data';
 import { findChineseTranslation, findEnglishTranslation } from './tagDatabaseService';
+import { logger } from '../config/debug.js';
 
 /**
  * 本地提示词增强服务 - AI服务的降级备份
@@ -104,7 +105,7 @@ class LocalPromptService {
       return { content: finalPrompt, source: 'local' };
       
     } catch (error) {
-      console.error('本地生成失败:', error);
+      logger.error('本地生成失败:', error);
       throw new Error('本地生成服务异常');
     }
   }
@@ -133,10 +134,10 @@ class LocalPromptService {
       
       return translatedText;
     } catch (error) {
-      console.error('词汇翻译失败:', error);
+      logger.error('词汇翻译失败:', error);
       return text; // 翻译失败时返回原文
     }
   }
 }
 
-export default new LocalPromptService(); 
+export default new LocalPromptService();

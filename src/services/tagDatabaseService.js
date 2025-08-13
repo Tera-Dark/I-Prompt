@@ -4,6 +4,7 @@
  */
 
 import tagDatabaseData from '../data/tagDatabase.json';
+import { logger } from '../config/debug.js';
 
 /**
  * 标签库数据管理类
@@ -43,21 +44,21 @@ export class TagDatabaseService {
    */
   findChineseTranslation(englishText) {
     const translations = this.getTranslations();
-    console.log(`🔍 [findChineseTranslation] 查找: "${englishText}" -> toLowerCase: "${englishText.toLowerCase()}"`);
-    console.log(`📚 [findChineseTranslation] 可用翻译数量: ${Object.keys(translations).length}`);
+    logger.translation(`🔍 [findChineseTranslation] 查找: "${englishText}" -> toLowerCase: "${englishText.toLowerCase()}"`);
+    logger.translation(`📚 [findChineseTranslation] 可用翻译数量: ${Object.keys(translations).length}`);
     
     // 检查一些特定的键
     const testKeys = ['dig', 'volvo', 'big four', 'annoying frenchman'];
     testKeys.forEach(key => {
       if (translations.hasOwnProperty(key)) {
-        console.log(`✅ [findChineseTranslation] 找到键: "${key}" = "${translations[key]}"`);
+        logger.translation(`✅ [findChineseTranslation] 找到键: "${key}" = "${translations[key]}"`);
       } else {
-        console.log(`❌ [findChineseTranslation] 未找到键: "${key}"`);
+        logger.translation(`❌ [findChineseTranslation] 未找到键: "${key}"`);
       }
     });
     
     const result = translations[englishText.toLowerCase()] || '';
-    console.log(`🎯 [findChineseTranslation] 查找结果: "${englishText}" -> "${result}"`);
+    logger.translation(`🎯 [findChineseTranslation] 查找结果: "${englishText}" -> "${result}"`);
     return result;
   }
 
@@ -184,7 +185,7 @@ export class TagDatabaseService {
       const stored = localStorage.getItem('userTagDatabase');
       return stored ? JSON.parse(stored) : {};
     } catch (error) {
-      console.error('加载用户标签库失败:', error);
+      logger.error('加载用户标签库失败:', error);
       return {};
     }
   }
@@ -197,7 +198,7 @@ export class TagDatabaseService {
       localStorage.setItem('userTagDatabase', JSON.stringify(database));
       this.userDatabase = database;
     } catch (error) {
-      console.error('保存用户标签库失败:', error);
+      logger.error('保存用户标签库失败:', error);
     }
   }
 
@@ -370,7 +371,7 @@ export class TagDatabaseService {
       }
       return false;
     } catch (error) {
-      console.error('导入用户数据库失败:', error);
+      logger.error('导入用户数据库失败:', error);
       return false;
     }
   }
@@ -428,7 +429,7 @@ export class TagDatabaseService {
       }
       return [];
     } catch (error) {
-      console.error('获取收藏列表失败:', error);
+      logger.error('获取收藏列表失败:', error);
       return [];
     }
   }
@@ -441,7 +442,7 @@ export class TagDatabaseService {
       localStorage.setItem('favorites', JSON.stringify(favorites));
       return true;
     } catch (error) {
-      console.error('保存收藏列表失败:', error);
+      logger.error('保存收藏列表失败:', error);
       return false;
     }
   }
@@ -496,4 +497,4 @@ export const addToFavorites = (tag) => tagDatabaseService.addToFavorites(tag);
 export const removeFromFavorites = (tag) => tagDatabaseService.removeFromFavorites(tag);
 
 // 默认导出服务实例
-export default tagDatabaseService; 
+export default tagDatabaseService;

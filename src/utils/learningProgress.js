@@ -3,6 +3,8 @@
  * 用于保存和跟踪用户的学习进度
  */
 
+import { logger } from '../config/debug.js';
+
 const STORAGE_KEYS = {
   TUTORIAL_PROGRESS: 'i_prompt_tutorial_progress',
   CHAPTER_COMPLETION: 'i_prompt_chapter_completion',
@@ -26,7 +28,7 @@ class LearningProgressManager {
       localStorage.removeItem(test);
       return true;
     } catch (e) {
-      console.warn('LocalStorage不支持，学习进度不会保存');
+      logger.warn('LocalStorage不支持，学习进度不会保存');
       return false;
     }
   }
@@ -38,7 +40,7 @@ class LearningProgressManager {
     try {
       return JSON.stringify(data);
     } catch (error) {
-      console.error('JSON序列化失败:', error);
+      logger.error('JSON序列化失败:', error);
       return null;
     }
   }
@@ -50,7 +52,7 @@ class LearningProgressManager {
     try {
       return JSON.parse(jsonString);
     } catch (error) {
-      console.error('JSON解析失败:', error);
+      logger.error('JSON解析失败:', error);
       return null;
     }
   }
@@ -77,7 +79,7 @@ class LearningProgressManager {
         quizScores: {}
       };
     } catch (error) {
-      console.error('获取教程进度失败:', error);
+      logger.error('获取教程进度失败:', error);
       return null;
     }
   }
@@ -111,10 +113,10 @@ class LearningProgressManager {
       // 更新统计信息
       this.updateLearningStats();
       
-      console.log('✅ 教程进度已更新:', tutorialId);
+      logger.ui('✅ 教程进度已更新:', tutorialId);
       return true;
     } catch (error) {
-      console.error('更新教程进度失败:', error);
+      logger.error('更新教程进度失败:', error);
       return false;
     }
   }
@@ -178,7 +180,7 @@ class LearningProgressManager {
       
       return true;
     } catch (error) {
-      console.error('记录学习时间失败:', error);
+      logger.error('记录学习时间失败:', error);
       return false;
     }
   }
@@ -213,10 +215,10 @@ class LearningProgressManager {
       progress.quizScores[chapterId] = quizResults.score;
       this.updateTutorialProgress(tutorialId, progress);
       
-      console.log('✅ 测验结果已保存:', tutorialId, chapterId);
+      logger.ui('✅ 测验结果已保存:', tutorialId, chapterId);
       return true;
     } catch (error) {
-      console.error('保存测验结果失败:', error);
+      logger.error('保存测验结果失败:', error);
       return false;
     }
   }
@@ -233,7 +235,7 @@ class LearningProgressManager {
       
       return allResults[tutorialId]?.[chapterId] || null;
     } catch (error) {
-      console.error('获取测验结果失败:', error);
+      logger.error('获取测验结果失败:', error);
       return null;
     }
   }
@@ -248,7 +250,7 @@ class LearningProgressManager {
       const stored = localStorage.getItem(STORAGE_KEYS.TUTORIAL_PROGRESS);
       return stored ? this.safeParse(stored) || {} : {};
     } catch (error) {
-      console.error('获取所有教程进度失败:', error);
+      logger.error('获取所有教程进度失败:', error);
       return {};
     }
   }
@@ -309,7 +311,7 @@ class LearningProgressManager {
         studyStreak: this.calculateStudyStreak(studyTimes)
       };
     } catch (error) {
-      console.error('获取学习统计失败:', error);
+      logger.error('获取学习统计失败:', error);
       return null;
     }
   }
@@ -393,10 +395,10 @@ class LearningProgressManager {
       delete allQuizzes[tutorialId];
       localStorage.setItem(STORAGE_KEYS.QUIZ_RESULTS, this.safeStringify(allQuizzes));
       
-      console.log('✅ 教程进度已重置:', tutorialId);
+      logger.ui('✅ 教程进度已重置:', tutorialId);
       return true;
     } catch (error) {
-      console.error('重置教程进度失败:', error);
+      logger.error('重置教程进度失败:', error);
       return false;
     }
   }
@@ -411,10 +413,10 @@ class LearningProgressManager {
       Object.values(STORAGE_KEYS).forEach(key => {
         localStorage.removeItem(key);
       });
-      console.log('✅ 所有学习数据已清除');
+      logger.ui('✅ 所有学习数据已清除');
       return true;
     } catch (error) {
-      console.error('清除学习数据失败:', error);
+      logger.error('清除学习数据失败:', error);
       return false;
     }
   }
@@ -437,7 +439,7 @@ class LearningProgressManager {
 
       return data;
     } catch (error) {
-      console.error('导出学习数据失败:', error);
+      logger.error('导出学习数据失败:', error);
       return null;
     }
   }
@@ -460,10 +462,10 @@ class LearningProgressManager {
       }
 
       this.updateLearningStats();
-      console.log('✅ 学习数据导入成功');
+      logger.ui('✅ 学习数据导入成功');
       return true;
     } catch (error) {
-      console.error('导入学习数据失败:', error);
+      logger.error('导入学习数据失败:', error);
       return false;
     }
   }
@@ -488,4 +490,4 @@ export const {
   importLearningData
 } = learningProgress;
 
-export default learningProgress; 
+export default learningProgress;

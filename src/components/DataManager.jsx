@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Download, Upload, Trash2, Info, CheckCircle, AlertCircle } from 'lucide-react';
 import { persistentStorage } from '../utils/persistentStorage';
+import { logger } from '../config/debug.js';
 
 /**
  * 数据管理组件
@@ -35,10 +36,10 @@ const DataManager = ({ className = '' }) => {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
         
-        console.log('✅ 数据导出成功');
+        logger.ui('✅ 数据导出成功');
       }
     } catch (error) {
-      console.error('导出数据失败:', error);
+      logger.error('导出数据失败:', error);
     } finally {
       setIsLoading(false);
     }
@@ -58,13 +59,13 @@ const DataManager = ({ className = '' }) => {
         const success = persistentStorage.importData(data);
         
         if (success) {
-          console.log('✅ 数据导入成功');
+          logger.ui('✅ 数据导入成功');
           loadStats();
         } else {
-          console.error('导入数据失败');
+          logger.error('导入数据失败');
         }
       } catch (error) {
-        console.error('解析导入文件失败:', error);
+        logger.error('解析导入文件失败:', error);
       } finally {
         setIsLoading(false);
         event.target.value = ''; // 重置文件输入
@@ -80,12 +81,12 @@ const DataManager = ({ className = '' }) => {
     try {
       const success = persistentStorage.clearAllData();
       if (success) {
-        console.log('✅ 所有数据已清除');
+        logger.ui('✅ 所有数据已清除');
         setStats(null);
         setShowConfirmClear(false);
       }
     } catch (error) {
-      console.error('清除数据失败:', error);
+      logger.error('清除数据失败:', error);
     } finally {
       setIsLoading(false);
     }
@@ -217,4 +218,4 @@ const DataManager = ({ className = '' }) => {
   );
 };
 
-export default DataManager; 
+export default DataManager;

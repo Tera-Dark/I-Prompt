@@ -3,9 +3,11 @@
  * 参考stable-diffusion-inspector的实现方式
  */
 
+import { logger } from '../config/debug.js';
+
 // 主要的提取函数
 export async function extractMetadata(file) {
-  console.log('🚀 开始提取图像元数据...');
+  logger.analysis('🚀 开始提取图像元数据...');
   
   const result = {
     success: false,
@@ -39,7 +41,7 @@ export async function extractMetadata(file) {
         result.extractedData.EXIF = exifData;
       }
     } catch (error) {
-      console.warn('EXIF提取失败:', error);
+      logger.warn('EXIF提取失败:', error);
     }
 
     // 标准化数据
@@ -55,7 +57,7 @@ export async function extractMetadata(file) {
     return result;
     
   } catch (error) {
-    console.error('❌ 元数据提取失败:', error);
+    logger.error('❌ 元数据提取失败:', error);
     result.error = error.message;
     throw error;
   }
@@ -78,7 +80,7 @@ async function extractFromPNG(file) {
           data: metadata
         });
       } catch (error) {
-        console.warn('PNG解析失败:', error);
+        logger.warn('PNG解析失败:', error);
         resolve(null);
       }
     };
@@ -125,7 +127,7 @@ function parsePNGChunks(buffer) {
 
       if (type === 'IEND') break;
     } catch (error) {
-      console.warn('PNG块解析警告:', error);
+      logger.warn('PNG块解析警告:', error);
       break;
     }
   }
@@ -151,7 +153,7 @@ function extractMetadataFromChunks(chunks) {
     const textData = parseTextChunk(chunk);
     if (!textData.keyword || !textData.text) continue;
 
-    console.log('解析文本块:', textData.keyword, '长度:', textData.text.length);
+    logger.analysis('解析文本块:', textData.keyword, '长度:', textData.text.length);
 
     // 检测不同格式
     if (textData.keyword === 'parameters' && isAutomatic1111Format(textData.text)) {
@@ -927,4 +929,4 @@ export const imageMetadataExtractor = {
   extractMetadata
 };
 
-export default imageMetadataExtractor; 
+export default imageMetadataExtractor;

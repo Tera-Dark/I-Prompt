@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Upload, Download, Eye, Settings, AlertCircle, CheckCircle, Info, Lightbulb, Star, Zap, Brain } from 'lucide-react';
 import { imageMetadataExtractor } from '../utils/imageMetadataExtractor.js';
 import { advancedPromptAnalyzer } from '../utils/advancedPromptAnalyzer.js';
+import { logger } from '../config/debug.js';
 
 const ImageExtractorPage = () => {
   const [image, setImage] = useState(null);
@@ -28,16 +29,16 @@ const ImageExtractorPage = () => {
     setExtractedData(null);
     
     try {
-      console.log('开始提取图像元数据...');
+      logger.ui('开始提取图像元数据...');
       const result = await imageMetadataExtractor.extractMetadata(file);
-      console.log('提取结果:', result);
+      logger.ui('提取结果:', result);
       
       // 如果成功提取到数据，进行高级提示词分析
       if (result.success && result.standardizedData) {
         const { positive, negative } = result.standardizedData;
         
         if (positive || negative) {
-          console.log('开始高级提示词分析...');
+          logger.ui('开始高级提示词分析...');
           try {
             const promptAnalysis = await advancedPromptAnalyzer.analyzeExtractedPrompts({
               positive: positive || '',
@@ -47,9 +48,9 @@ const ImageExtractorPage = () => {
             
             // 将分析结果添加到结果中
             result.promptAnalysis = promptAnalysis;
-            console.log('提示词分析完成:', promptAnalysis);
+            logger.ui('提示词分析完成:', promptAnalysis);
           } catch (analysisError) {
-            console.warn('提示词分析失败:', analysisError);
+            logger.warn('提示词分析失败:', analysisError);
             result.promptAnalysis = {
               analyzed: false,
               reason: `分析失败: ${analysisError.message}`,
@@ -97,7 +98,7 @@ const ImageExtractorPage = () => {
       result.timestamp = new Date().toISOString();
       setExtractedData(result);
     } catch (error) {
-      console.error('元数据提取失败:', error);
+      logger.error('元数据提取失败:', error);
       setExtractedData({
         success: false,
         error: error.message,
@@ -663,4 +664,4 @@ const ImageExtractorPage = () => {
   );
 };
 
-export default ImageExtractorPage; 
+export default ImageExtractorPage;

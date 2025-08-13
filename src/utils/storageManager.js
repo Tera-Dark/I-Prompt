@@ -3,6 +3,8 @@
  * 支持会话数据(1小时生命周期)和半永久数据的分别管理
  */
 
+import { logger } from '../config/debug.js';
+
 // 存储类型常量
 export const STORAGE_TYPES = {
   SESSION: 'session',       // 会话数据 - 1小时过期
@@ -72,7 +74,7 @@ class StorageManager {
       localStorage.removeItem(test);
       return true;
     } catch (e) {
-      console.warn('本地存储不可用，将使用内存存储');
+      logger.warn('本地存储不可用，将使用内存存储');
       return false;
     }
   }
@@ -503,4 +505,4 @@ export const storageUtils = {
   isSupported: storageManager.isSupported
 };
 
-export default storageManager; 
+export default storageManager;

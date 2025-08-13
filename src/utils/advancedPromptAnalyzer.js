@@ -3,6 +3,8 @@
  * 融合NovelAI Spell项目和Live Context技术的智能提示词解析功能
  */
 
+import { logger } from '../config/debug.js';
+
 export class AdvancedPromptAnalyzer {
   
   constructor() {
@@ -1055,9 +1057,9 @@ export class AdvancedPromptAnalyzer {
   analyzeExtractedPrompts(extractedData) {
     const { positive = '', negative = '', parameters = {} } = extractedData;
     
-    console.log('开始分析提取的提示词...');
-    console.log('正向提示词长度:', positive.length);
-    console.log('负向提示词长度:', negative.length);
+    logger.analysis('开始分析提取的提示词...');
+    logger.analysis('正向提示词长度:', positive.length);
+    logger.analysis('负向提示词长度:', negative.length);
     
     try {
       const analysis = this.analyzePrompts(positive, negative, parameters);
@@ -1081,7 +1083,7 @@ export class AdvancedPromptAnalyzer {
       
       return analysis;
     } catch (error) {
-      console.error('提示词分析失败:', error);
+      logger.error('提示词分析失败:', error);
       return {
         analyzed: false,
         reason: `分析失败: ${error.message}`,
@@ -1096,4 +1098,4 @@ export class AdvancedPromptAnalyzer {
 
 // 导出类和实例
 export const advancedPromptAnalyzer = new AdvancedPromptAnalyzer();
-export default AdvancedPromptAnalyzer; 
+export default AdvancedPromptAnalyzer;

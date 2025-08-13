@@ -114,7 +114,7 @@ const NotificationContainer = ({ notifications, removeNotification }) => {
       ))}
       
       {/* CSS 动画样式 */}
-      <style jsx>{`
+      <style>{`
         @keyframes slideInRight {
           from {
             transform: translateX(100%) scale(0.8);
@@ -306,4 +306,4 @@ export const useNotify = () => {
   return { notifySuccess, notifyError, showWarning, showInfo };
 };
 
-export default NotificationProvider; 
+export default NotificationProvider;

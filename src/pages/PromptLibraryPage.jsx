@@ -27,6 +27,9 @@ import {
 // 导入通知系统
 import { useNotify } from '../components/common/NotificationSystem';
 
+// 导入日志系统
+import { logger } from '../config/debug.js';
+
 const PromptLibraryPage = () => {
   // 使用通知系统
   const { notifySuccess, notifyError, showWarning, showInfo } = useNotify();
@@ -151,7 +154,7 @@ const PromptLibraryPage = () => {
     },
     
     complete: (result) => {
-      console.log(`🏁 [TranslationController] 翻译完成: "${result}"`);
+      logger.translation(`🏁 [TranslationController] 翻译完成: "${result}"`);
       setTranslationState(prev => ({
         ...prev,
         status: 'completed',
@@ -168,7 +171,7 @@ const PromptLibraryPage = () => {
     },
     
     error: (error) => {
-      console.log(`❌ [TranslationController] 翻译失败:`, error);
+      logger.error(`❌ [TranslationController] 翻译失败:`, error);
       setTranslationState(prev => ({
         ...prev,
         status: 'error',
@@ -187,17 +190,17 @@ const PromptLibraryPage = () => {
     shouldTranslate: (input) => {
       const state = translationState;
       if (state.status === 'translating') {
-        console.log(`🛑 [TranslationController] 正在翻译中，跳过`);
+        logger.translation(`🛑 [TranslationController] 正在翻译中，跳过`);
         return false;
       }
       
       if (state.lastInput === input) {
-        console.log(`🛑 [TranslationController] 输入内容未变化，跳过: "${input}"`);
+        logger.translation(`🛑 [TranslationController] 输入内容未变化，跳过: "${input}"`);
         return false;
       }
       
       if (state.completedAt > 0 && Date.now() - state.completedAt < 1000) {
-        console.log(`🛑 [TranslationController] 防抖期内，跳过翻译`);
+        logger.translation(`🛑 [TranslationController] 防抖期内，跳过翻译`);
         return false;
       }
       
@@ -207,14 +210,14 @@ const PromptLibraryPage = () => {
 
   // 页面加载时的初始化
   useEffect(() => {
-    console.log('🚀 [PromptLibraryPage] 组件初始化');
+    logger.ui('🚀 [PromptLibraryPage] 组件初始化');
     
     // 设置初始测试数据，不进行任何翻译预设
     const testTags = ['beautiful girl', 'anime style', 'masterpiece', 'blue eyes', 'long hair'];
     setSelectedTags(testTags);
     setEnglishPrompt(testTags.join(', '));
     
-    console.log('📝 [初始化] 设置初始标签，等待真正的翻译引擎处理');
+    logger.ui('📝 [初始化] 设置初始标签，等待真正的翻译引擎处理');
     
     // 初始化收藏夹数据
     const favoritesList = tagDatabaseService.getFavorites();
@@ -228,10 +231,10 @@ const PromptLibraryPage = () => {
       if (savedCustomLibrary) {
         const parsedLibrary = JSON.parse(savedCustomLibrary);
         setCustomLibrary(parsedLibrary);
-        console.log('📚 [初始化] 加载自定义库数据:', parsedLibrary);
+        logger.ui('📚 [初始化] 加载自定义库数据:', parsedLibrary);
       }
     } catch (error) {
-      console.error('加载自定义库数据失败:', error);
+      logger.error('加载自定义库数据失败:', error);
     }
 
 
@@ -672,12 +675,12 @@ const PromptLibraryPage = () => {
         return newTags;
       });
       
-      console.log('📝 [addTag] 标签已添加，翻译将由TagPill组件自动处理');
+      logger.ui('📝 [addTag] 标签已添加，翻译将由TagPill组件自动处理');
       
       notifySuccess('add', fromDatabase ? '从数据库添加' : '手动添加', tagText);
       
     } catch (error) {
-      console.error('❌ [addTag] 添加标签失败:', error);
+      logger.error('❌ [addTag] 添加标签失败:', error);
       notifyError('add', error.message, tagText || String(tagToAdd));
     } finally {
       
@@ -764,7 +767,7 @@ const PromptLibraryPage = () => {
       
       // 如果有括号，不允许调整权重
       if (brackets > 0) {
-        console.warn('有括号的标签不能调整权重');
+        logger.warn('有括号的标签不能调整权重');
         return prev;
       }
       
@@ -846,7 +849,7 @@ const PromptLibraryPage = () => {
           newBrackets = Math.min(5, currentBrackets + 1);
         } else {
           // 不同类型，不允许混用
-          console.warn('不能混用不同类型的括号');
+          logger.warn('不能混用不同类型的括号');
           return prev;
         }
       } else if (delta < 0) {
@@ -954,15 +957,15 @@ const PromptLibraryPage = () => {
     
     if (contentToCopy) {
       try {
-        console.log('📋 [handleCopy] 复制内容:', contentToCopy);
+        logger.ui('📋 [handleCopy] 复制内容:', contentToCopy);
         await copyToClipboard(contentToCopy);
         notifySuccess('copy', `${contentType}已复制到剪贴板`);
       } catch (error) {
-        console.error('❌ [handleCopy] 复制失败:', error);
+        logger.error('❌ [handleCopy] 复制失败:', error);
         notifyError('copy', '复制失败，请重试');
       }
     } else {
-      console.log('⚠️ [handleCopy] 没有内容可复制');
+      logger.warn('⚠️ [handleCopy] 没有内容可复制');
       notifyError('copy', '没有内容可复制');
     }
   };
@@ -975,31 +978,31 @@ const PromptLibraryPage = () => {
       
       // 检查是否为英文标签，只翻译英文标签
       if (!/^[a-zA-Z\s\-_\d]+$/.test(tagText)) {
-        console.log(`⚠️ [translateSingleTag] 跳过非英文标签: "${tagText}"`);
+        logger.translation(`⚠️ [translateSingleTag] 跳过非英文标签: "${tagText}"`);
         return null;
       }
       
-      console.log(`🌐 [translateSingleTag] 开始翻译英文标签: "${tagText}"`);
+      logger.translation(`🌐 [translateSingleTag] 开始翻译英文标签: "${tagText}"`);
       
       const result = await translate(tagText, 'zh', 'en'); // 明确指定英文到中文
       const rawTranslation = result?.translatedText || result;
       
       if (rawTranslation) {
-        console.log(`📝 [translateSingleTag] 原始翻译结果: "${rawTranslation}"`);
+        logger.translation(`📝 [translateSingleTag] 原始翻译结果: "${rawTranslation}"`);
         
         // 使用统一的清理函数
         const cleanTranslation = cleanTranslationResult(rawTranslation);
-        console.log(`✨ [translateSingleTag] 清理后结果: "${cleanTranslation}"`);
+        logger.translation(`✨ [translateSingleTag] 清理后结果: "${cleanTranslation}"`);
         
         // 如果清理后为空或与原文相同，返回null
         if (!cleanTranslation || cleanTranslation === tagText) {
-          console.log(`⚠️ [translateSingleTag] 翻译结果无效或未变化`);
+          logger.translation(`⚠️ [translateSingleTag] 翻译结果无效或未变化`);
           return null;
         }
         
         // 检查是否为合理的中文翻译
         if (!/[\u4e00-\u9fa5]/.test(cleanTranslation)) {
-          console.log(`⚠️ [translateSingleTag] 翻译结果不包含中文: "${cleanTranslation}"`);
+          logger.translation(`⚠️ [translateSingleTag] 翻译结果不包含中文: "${cleanTranslation}"`);
           return null;
         }
         
@@ -1008,7 +1011,7 @@ const PromptLibraryPage = () => {
           [tagText]: cleanTranslation
         }));
         
-        console.log(`✅ [translateSingleTag] 翻译成功: ${tagText} -> ${cleanTranslation}`);
+        logger.translation(`✅ [translateSingleTag] 翻译成功: ${tagText} -> ${cleanTranslation}`);
         notifySuccess('translate', `${tagText} → ${cleanTranslation}`);
         
         // 返回清理后的结果
@@ -1017,11 +1020,11 @@ const PromptLibraryPage = () => {
           translatedText: cleanTranslation 
         };
       } else {
-        console.log(`❌ [translateSingleTag] 翻译返回空结果`);
+        logger.translation(`❌ [translateSingleTag] 翻译返回空结果`);
         return null;
       }
     } catch (error) {
-      console.error('❌ [translateSingleTag] 翻译失败:', error);
+      logger.error('❌ [translateSingleTag] 翻译失败:', error);
       notifyError('translate', error.message || '翻译失败', text);
       return null;
     }
@@ -1375,7 +1378,7 @@ const PromptLibraryPage = () => {
       
       notifySuccess('export', '库数据导出成功');
     } catch (error) {
-      console.error('导出失败:', error);
+      logger.error('导出失败:', error);
       notifyError('export', '库数据导出失败');
     }
   }, [customLibrary, favorites, notifySuccess, notifyError]);
@@ -1397,7 +1400,7 @@ const PromptLibraryPage = () => {
       setImportExportData('');
       setShowImportExport(false);
     } catch (error) {
-      console.error('导入失败:', error);
+      logger.error('导入失败:', error);
       notifyError('import', '数据格式错误，导入失败');
     }
   }, [notifySuccess, notifyError]);
@@ -2122,4 +2125,4 @@ const PromptLibraryPage = () => {
   );
 };
 
-export default PromptLibraryPage; 
+export default PromptLibraryPage;
